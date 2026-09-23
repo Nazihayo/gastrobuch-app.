@@ -1,26 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #14171a;
+  --ink-soft: #1f2327;
+  --paper: #f5f1e8;
+  --paper-line: #dcd5c4;
+  --text-on-ink: #ede9df;
+  --text-on-ink-dim: #9a9488;
+  --green: #1f6b4d;
+  --green-bright: #3fae82;
+  --green-deep: #163f30;
+  --red: #c0554a;
+  --divider: rgba(237, 233, 223, 0.12);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-paper: var(--paper);
+  --color-paper-line: var(--paper-line);
+  --color-text-on-ink: var(--text-on-ink);
+  --color-text-on-ink-dim: var(--text-on-ink-dim);
+  --color-brand-green: var(--green);
+  --color-brand-green-bright: var(--green-bright);
+  --color-brand-green-deep: var(--green-deep);
+  --color-brand-red: var(--red);
+  --color-divider: var(--divider);
+  --font-display: var(--font-aref-ruqaa);
+  --font-sans: var(--font-ibm-plex-sans-arabic);
+  --font-num: var(--font-ibm-plex-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ink);
+  color: var(--text-on-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-num {
+  font-family: var(--font-num);
+  direction: ltr;
+  unicode-bidi: isolate;
 }

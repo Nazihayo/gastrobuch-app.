@@ -1,0 +1,2282 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Gastrobuch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14171A;
+    --ink-soft:#1F2327;
+    --paper:#F5F1E8;
+    --paper-line:#DCD5C4;
+    --text-on-ink:#EDE9DF;
+    --text-on-ink-dim:#9A9488;
+    --green:#1F6B4D;
+    --green-bright:#3FAE82;
+    --green-deep:#163F30;
+    --red:#C0554A;
+    --divider:rgba(237,233,223,0.12);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--ink); color:var(--text-on-ink);
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    line-height:1.6;
+  }
+  .display{font-family:'Aref Ruqaa', serif;}
+  .num{font-family:'IBM Plex Mono', monospace; direction:ltr; unicode-bidi:isolate;}
+
+  #app{display:flex; flex-direction:column; min-height:100vh;}
+
+  /* TOPBAR */
+  .topbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 18px; border-bottom:1px solid var(--divider);
+    position:sticky; top:0; background:var(--ink); z-index:20;
+  }
+  .topbar-title{font-family:'Aref Ruqaa', serif; font-size:21px; font-weight:700;}
+  .topbar-date{font-size:11px; color:var(--text-on-ink-dim); margin-top:2px;}
+  .lang-btn{
+    background:var(--ink-soft); border:1px solid var(--divider); color:var(--text-on-ink-dim);
+    padding:8px 16px; border-radius:20px; font-size:12px; cursor:pointer;
+    font-family:'IBM Plex Mono', monospace; font-weight:600;
+  }
+
+  /* MAIN */
+  main.content{
+    flex:1; padding:20px 18px 110px;
+    max-width:640px; width:100%; margin:0 auto; box-sizing:border-box;
+  }
+  .tab-pane{display:none;}
+  .tab-pane.active{display:block; animation:fadeIn .18s ease;}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+
+  h2.page-title{
+    font-family:'Aref Ruqaa', serif; font-weight:700;
+    font-size:24px; margin-bottom:6px;
+  }
+  p.page-lead{font-size:13.5px; color:var(--text-on-ink-dim); margin-bottom:22px; line-height:1.7;}
+
+  /* CARD */
+  .card{
+    background:var(--ink-soft); border:1px solid var(--divider);
+    border-radius:10px; padding:20px; margin-bottom:16px;
+  }
+  .card h3{font-size:13px; color:var(--text-on-ink-dim); font-weight:500; margin-bottom:14px;}
+
+  /* FIELDS */
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12.5px; margin-bottom:6px; color:var(--text-on-ink-dim);}
+  .input-row{
+    display:flex; align-items:center;
+    background:var(--ink); border:1px solid var(--divider);
+    border-radius:6px; padding:2px 12px;
+  }
+  .input-row span.unit{font-size:12px; color:var(--text-on-ink-dim); white-space:nowrap;}
+  .input-row input[type=number], .input-row input[type=text]{
+    flex:1; min-width:0; background:transparent; border:none; outline:none;
+    color:var(--text-on-ink); font-family:'IBM Plex Mono', monospace;
+    font-size:15px; padding:11px 6px; width:100%;
+  }
+  input[type=text].plain{
+    background:transparent; border:none; outline:none;
+    color:var(--text-on-ink); font-size:14px; width:100%;
+  }
+  select.plain{
+    background:var(--ink); border:1px solid var(--divider); border-radius:5px;
+    color:var(--text-on-ink-dim); font-size:11.5px; padding:6px 4px;
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+  }
+
+  /* BUTTONS */
+  button{font-family:'IBM Plex Sans Arabic', sans-serif; cursor:pointer;}
+  .btn-primary{
+    background:var(--green-bright); color:#0A1F16; border:none;
+    border-radius:7px; padding:15px; font-size:15px; font-weight:700; width:100%;
+  }
+  .btn-primary:active{transform:scale(0.99);}
+  .btn-dashed{
+    background:none; border:1px dashed var(--divider); color:var(--text-on-ink-dim);
+    border-radius:6px; padding:12px; width:100%; font-size:13.5px; margin-top:4px;
+  }
+  .btn-dashed:hover{color:var(--text-on-ink); border-color:var(--text-on-ink-dim);}
+  .btn-link{
+    background:none; border:none; color:var(--green-bright);
+    font-size:13.5px; padding:6px 0; text-decoration:underline;
+  }
+  .back-btn{
+    background:none; border:none; color:var(--text-on-ink-dim);
+    font-size:13px; margin-bottom:14px; padding:4px 0; display:inline-block;
+  }
+
+  /* OUT ROWS */
+  .out-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:9px 0; border-bottom:1px solid var(--divider); font-size:13.5px; color:var(--text-on-ink-dim);
+  }
+  .out-row:last-child{border-bottom:none;}
+  .out-row .val{font-family:'IBM Plex Mono', monospace; direction:ltr; color:var(--text-on-ink); font-size:14.5px;}
+  .out-row.tax .val{color:var(--red);}
+  .out-row.net .val{color:var(--green-bright); font-weight:700; font-size:17px;}
+
+  .final-banner{
+    margin-top:8px; background:var(--green-deep); border-radius:8px;
+    padding:18px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .final-banner span:first-child{font-size:13.5px; font-weight:600;}
+  .final-banner .val{font-family:'IBM Plex Mono', monospace; direction:ltr; font-size:21px; font-weight:700; color:#7FE3B4;}
+
+  .disclaimer{font-size:11.5px; color:var(--text-on-ink-dim); line-height:1.7; margin-top:10px;}
+
+  /* DASHBOARD */
+  .storage-note{
+    background:rgba(192,85,74,0.1); border:1px solid rgba(192,85,74,0.3);
+    border-radius:8px; padding:12px 14px; font-size:12px; color:var(--text-on-ink-dim);
+    margin-bottom:18px; line-height:1.7;
+  }
+  .alert-item{
+    display:flex; align-items:flex-start; gap:10px;
+    background:rgba(192,85,74,0.12); border:1px solid rgba(192,85,74,0.35);
+    border-radius:8px; padding:12px 14px; margin-bottom:10px; font-size:13px; line-height:1.6;
+  }
+  .alert-item.info{background:rgba(31,107,77,0.12); border-color:rgba(31,107,77,0.35);}
+
+  /* ===== RECIPES ===== */
+  .recipe-card{
+    background:var(--ink-soft); border:1px solid var(--divider);
+    border-radius:10px; padding:18px; margin-bottom:16px;
+  }
+  .recipe-head{display:flex; align-items:center; gap:8px; margin-bottom:12px;}
+  .recipe-head input.plain{font-size:15px; font-weight:600; flex:1;}
+  .recipe-head .input-row{max-width:110px;}
+  .ing-row{
+    display:grid; grid-template-columns:1fr 90px 26px; gap:8px; align-items:center;
+    background:var(--ink); border:1px solid var(--divider); border-radius:6px;
+    padding:8px 10px; margin-bottom:8px;
+  }
+  .ing-row input.plain{font-size:13px;}
+  .ing-row .input-row{padding:0 8px;}
+  .ing-row input[type=number]{font-size:13px; padding:8px 4px;}
+  .recipe-summary{
+    display:flex; justify-content:space-between; gap:8px; margin-top:12px;
+    padding-top:12px; border-top:1px solid var(--divider);
+    font-size:12.5px; color:var(--text-on-ink-dim); flex-wrap:wrap;
+  }
+  .recipe-summary b{color:var(--text-on-ink); font-family:'IBM Plex Mono', monospace;}
+  .recipe-summary b.margin-bad{color:var(--red);}
+  .recipe-summary b.margin-good{color:var(--green-bright);}
+  .today-card{
+    background:var(--paper); color:#221F1A; border-radius:10px; padding:22px;
+    margin-bottom:18px;
+  }
+  .today-card .r-title{font-size:12px; color:#6B6459; margin-bottom:2px;}
+  .today-card .r-date{font-family:'IBM Plex Mono',monospace; direction:ltr; font-size:12px; color:#6B6459; margin-bottom:14px; padding-bottom:12px; border-bottom:1px dashed var(--paper-line);}
+  .today-card .r-row{display:flex; justify-content:space-between; font-size:13.5px; padding:5px 0;}
+  .today-card .r-row .val{font-family:'IBM Plex Mono',monospace; direction:ltr; font-weight:600;}
+  .today-card .r-empty{text-align:center; padding:14px 0; font-size:13.5px; color:#6B6459;}
+
+  /* LIST ROWS (staff/expenses/inventory) */
+  .row-list{display:flex; flex-direction:column; gap:10px; margin-bottom:14px;}
+  .li{
+    background:var(--ink); border:1px solid var(--divider); border-radius:8px; padding:12px 14px;
+  }
+  .li.warn{border-color:var(--red);}
+  .li-top{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .li-top input.plain{font-size:14px; font-weight:500;}
+  .remove-btn{
+    background:none; border:none; color:var(--text-on-ink-dim);
+    font-size:16px; padding:4px; flex-shrink:0;
+  }
+  .remove-btn:hover{color:var(--red);}
+  .li-grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .li-grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
+  .li-cell{background:var(--ink-soft); border-radius:5px; padding:7px 8px; text-align:center;}
+  .li-cell label{display:block; font-size:9.5px; color:var(--text-on-ink-dim); margin-bottom:3px;}
+  .li-cell input{
+    width:100%; background:transparent; border:none; outline:none;
+    color:var(--text-on-ink); font-family:'IBM Plex Mono',monospace; font-size:14px; text-align:center;
+  }
+  .li-cell.order{background:rgba(31,107,77,0.18);}
+  .li.warn .li-cell.order{background:rgba(192,85,74,0.18);}
+  .li-cell.order .order-val{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--green-bright);}
+  .li.warn .li-cell.order .order-val{color:var(--red);}
+
+  .minijob-warning{
+    margin-top:6px; font-size:12.5px; color:var(--red);
+    background:rgba(192,85,74,0.12); border-radius:6px; padding:12px 14px;
+  }
+
+  /* HISTORY LIST */
+  .hist-row{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--divider); font-size:13px;}
+  .hist-row:last-child{border-bottom:none;}
+  .hist-row .val{font-family:'IBM Plex Mono',monospace; direction:ltr;}
+
+  /* MORE MENU */
+  .menu-item{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--ink-soft); border:1px solid var(--divider); border-radius:10px;
+    padding:16px 18px; margin-bottom:10px; width:100%; text-align:start;
+    color:var(--text-on-ink); font-size:14.5px; font-weight:500;
+  }
+  .menu-item .arrow{color:var(--text-on-ink-dim); font-size:16px;}
+
+  /* HYGIENE STATUS */
+  .hyg-status{
+    border-radius:8px; padding:14px 16px; margin-bottom:18px;
+    font-weight:600; font-size:13.5px; text-align:center;
+  }
+  .hyg-status.ok{background:rgba(31,107,77,0.18); color:var(--green-bright);}
+  .hyg-status.warn{background:rgba(192,85,74,0.18); color:var(--red);}
+  .check-item{
+    display:flex; align-items:center; gap:12px;
+    background:var(--ink); border:1px solid var(--divider);
+    border-radius:8px; padding:13px 14px; margin-bottom:9px;
+  }
+  .check-item input[type=checkbox]{width:19px; height:19px; accent-color:var(--green-bright); flex-shrink:0;}
+  .check-item label{font-size:13.5px;}
+
+  /* BOTTOM NAV */
+  .bottom-nav{
+    position:fixed; bottom:0; inset-inline:0; display:flex;
+    background:var(--ink-soft); border-top:1px solid var(--divider);
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom)); z-index:30;
+  }
+  .bottom-nav button{
+    flex:1; background:none; border:none; color:var(--text-on-ink-dim);
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    font-size:10px; padding:6px 2px;
+  }
+  .bottom-nav button .icon{font-size:19px; line-height:1;}
+  .bottom-nav button.active{color:var(--green-bright);}
+
+  @media (min-width:641px){
+    main.content{padding-top:28px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="appTitle">Gastrobuch</div>
+      <div class="topbar-date" id="topbarDate"></div>
+    </div>
+    <div class="topbar-actions" style="display:flex; gap:8px;">
+      <button class="lang-btn" id="countryBtn">🇩🇪 DE</button>
+      <button class="lang-btn" id="langBtn">عربي</button>
+    </div>
+  </div>
+
+  <main class="content">
+
+    <!-- DASHBOARD -->
+    <section id="tab-dashboard" class="tab-pane active">
+      <h2 class="page-title" data-i18n="dash_title">Übersicht</h2>
+      <p class="page-lead" data-i18n="dash_lead">Dein Tag und dein Monat auf einen Blick.</p>
+
+      <div class="storage-note" data-i18n="storage_note">Hinweis: Alle Daten werden nur lokal in diesem Browser gespeichert (noch keine Cloud-Synchronisierung). Bei einem neuen Gerät oder gelöschten Browserdaten gehen die Einträge verloren.</div>
+
+      <div class="card" id="briefingCard" style="background:var(--green-deep);">
+        <div id="briefingGreeting" style="font-size:16px; font-weight:600; margin-bottom:6px;"></div>
+        <div id="briefingSub" style="font-size:13px; color:var(--text-on-ink-dim);"></div>
+      </div>
+
+      <div class="today-card">
+        <div class="r-title" data-i18n="dash_today_card_title">Heute</div>
+        <div class="r-date" id="todayCardDate"></div>
+        <div id="todayCardBody"></div>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="dash_month_title">Dieser Monat</h3>
+        <div class="out-row"><span data-i18n="dash_month_sales">Umsatz gesamt</span><span class="val" id="dashMonthSales">€ 0,00</span></div>
+        <div class="out-row tax"><span data-i18n="dash_month_tax">Steuer geschätzt</span><span class="val" id="dashMonthTax">€ 0,00</span></div>
+        <div class="out-row"><span data-i18n="dash_month_wages">Löhne</span><span class="val" id="dashMonthWages">€ 0,00</span></div>
+        <div class="out-row"><span data-i18n="dash_month_expenses">Fixkosten</span><span class="val" id="dashMonthExpenses">€ 0,00</span></div>
+        <div class="final-banner">
+          <span data-i18n="dash_month_final">Geschätzter Reingewinn</span>
+          <span class="val" id="dashMonthFinal">€ 0,00</span>
+        </div>
+      </div>
+
+      <div class="card" id="cashForecastCard" style="display:none;">
+        <h3 data-i18n="cash_title">Kassenprognose</h3>
+        <div class="out-row net"><span data-i18n="cash_projection">Prognose bis Monatsende (nach Löhnen &amp; Fixkosten)</span><span class="val" id="cashProjectionVal">€ 0,00</span></div>
+      </div>
+
+      <div class="card" id="healthScoreCard">
+        <h3 data-i18n="health_title">Restaurant-Gesundheit</h3>
+        <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;">
+          <span id="healthEmoji" style="font-size:22px;">🟢</span>
+          <span class="num" id="healthScoreVal" style="font-size:30px; font-weight:700;">100</span>
+          <span style="font-size:13px; color:var(--text-on-ink-dim);">/100</span>
+        </div>
+        <div id="healthReasons" style="font-size:13px; color:var(--text-on-ink-dim); line-height:1.9;"></div>
+      </div>
+
+      <div id="alertsBox"></div>
+
+      <div class="card" id="advisorBox" style="display:none;">
+        <h3 data-i18n="adv_title">Restaurant-Berater</h3>
+        <button class="btn-dashed" id="btnAskAdvisor" data-i18n="adv_ask_btn">🧠 Wie war dieser Monat?</button>
+        <div id="advisorAnswer" style="margin-top:12px; font-size:13.5px; line-height:1.8; white-space:pre-wrap;"></div>
+      </div>
+    </section>
+
+    <!-- SALES -->
+    <section id="tab-sales" class="tab-pane">
+      <h2 class="page-title" data-i18n="sales_title">Verkauf &amp; Steuer</h2>
+      <p class="page-lead" id="salesLead" data-i18n="sales_lead">Trage die heutigen Zahlen ein — die Schätzung berechnet sich sofort (7% Speisen / 19% Getränke, gültig seit 2026).</p>
+
+      <div class="card">
+        <div class="field">
+          <label data-i18n="sales_food">Speisenumsatz (inkl. USt.)</label>
+          <div class="input-row"><span class="unit">€</span><input type="number" id="inFood" min="0" step="10"></div>
+        </div>
+        <div class="field">
+          <label data-i18n="sales_drink">Getränkeumsatz (inkl. USt.)</label>
+          <div class="input-row"><span class="unit">€</span><input type="number" id="inDrink" min="0" step="10"></div>
+        </div>
+        <div class="field">
+          <label data-i18n="sales_delivery">Lieferdienst-Umsatz (Lieferando/Wolt, inkl. USt.)</label>
+          <div class="input-row"><span class="unit">€</span><input type="number" id="inDelivery" min="0" step="10" value="0"></div>
+        </div>
+        <div class="field">
+          <label data-i18n="sales_commission">Plattform-Kommission</label>
+          <div class="input-row"><input type="number" id="inCommission" min="0" max="100" step="1" value="30"><span class="unit">%</span></div>
+        </div>
+        <div class="field">
+          <label data-i18n="sales_purch">Wareneinkauf heute (inkl. USt.)</label>
+          <div class="input-row"><span class="unit">€</span><input type="number" id="inPurch" min="0" step="10"></div>
+          <div id="invoiceScanBox" style="display:none; margin-top:8px;">
+            <input type="file" id="invoiceFile" accept="image/*" capture="environment" style="display:none;">
+            <button type="button" class="btn-dashed" id="btnScanInvoice" data-i18n="sales_scan_btn">📷 Beleg fotografieren &amp; berechnen</button>
+            <p id="scanStatus" style="font-size:12px; color:var(--text-on-ink-dim); margin-top:6px;"></p>
+          </div>
+        </div>
+        <div id="portionsBox" style="display:none; margin-bottom:16px;">
+          <h3 style="font-size:13px; color:var(--text-on-ink-dim); font-weight:500; margin-bottom:10px;" data-i18n="portions_title">Verkaufte Gerichte heute (für Schwundkontrolle)</h3>
+          <div id="portionsList"></div>
+        </div>
+        <button class="btn-primary" id="btnSaveSales" data-i18n="sales_save">Heute speichern</button>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="sales_result_title">Sofortschätzung</h3>
+        <div class="out-row"><span data-i18n="sales_total">Umsatz gesamt</span><span class="val" id="outSaleTotal">€ 0,00</span></div>
+        <div class="out-row"><span data-i18n="sales_vat">USt. auf Umsatz</span><span class="val" id="outSaleVat">€ 0,00</span></div>
+        <div class="out-row"><span data-i18n="sales_vatpurch">Abziehbare Vorsteuer</span><span class="val" id="outSaleVatPurch">€ 0,00</span></div>
+        <div class="out-row tax"><span data-i18n="sales_vatdue">USt. fällig heute</span><span class="val" id="outSaleVatDue">€ 0,00</span></div>
+        <div class="out-row tax" id="commissionRow" style="display:none;"><span data-i18n="sales_commission_amount">Plattform-Kommission</span><span class="val" id="outCommission">€ 0,00</span></div>
+        <div class="out-row net"><span data-i18n="sales_net">Netto heute</span><span class="val" id="outSaleNet">€ 0,00</span></div>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="sales_history_title">Letzte Tage</h3>
+        <div id="salesHistory"></div>
+      </div>
+      <p class="disclaimer" data-i18n="sales_disclaimer">Automatische Schätzung, keine Steuerberatung. Wareneinkauf wird vereinfacht mit 7% Vorsteuer gerechnet.</p>
+    </section>
+
+    <!-- STAFF -->
+    <section id="tab-staff" class="tab-pane">
+      <h2 class="page-title" data-i18n="staff_title">Personal</h2>
+      <p class="page-lead" id="staffLead" data-i18n="staff_lead">Stunden und Stundenlohn — die Minijob-Grenze (603 € seit 2026) wird automatisch geprüft.</p>
+
+      <div class="row-list" id="staffList"></div>
+      <button class="btn-dashed" id="btnAddStaff" data-i18n="staff_add">+ Mitarbeiter hinzufügen</button>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="out-row"><span data-i18n="staff_count">Mitarbeiter</span><span class="val" id="outStaffCount">0</span></div>
+        <div class="out-row"><span data-i18n="staff_hours_total">Stunden gesamt</span><span class="val" id="outStaffHours">0</span></div>
+        <div class="out-row tax"><span data-i18n="staff_wages_total">Löhne gesamt (brutto)</span><span class="val" id="outStaffWages">€ 0,00</span></div>
+      </div>
+      <div class="minijob-warning" id="minijobWarning" style="display:none;" data-i18n="staff_minijob_warn">⚠ Mindestens ein Mitarbeiter über der Minijob-Grenze — Anmeldung prüfen.</div>
+      <p class="disclaimer" data-i18n="staff_disclaimer">Nur Bruttolohn (Stunden × Satz). Echte Nettolohnabrechnung und Meldungen brauchen ein zugelassenes Lohnprogramm.</p>
+    </section>
+
+    <!-- INVENTORY -->
+    <section id="tab-inventory" class="tab-pane">
+      <h2 class="page-title" data-i18n="inv_title">Lager</h2>
+      <p class="page-lead" data-i18n="inv_lead">Wöchentlicher Bedarf minus aktueller Bestand = automatische Bestellmenge.</p>
+
+      <div class="card" style="text-align:center;">
+        <span class="num" id="invSummaryNum" style="font-size:26px; font-weight:700;">0</span>
+        <p style="font-size:12.5px; color:var(--text-on-ink-dim); margin-top:4px;" data-i18n="inv_summary_label">Artikel müssen bestellt werden</p>
+      </div>
+
+      <div class="row-list" id="invList"></div>
+      <button class="btn-dashed" id="btnAddInv" data-i18n="inv_add">+ Artikel hinzufügen</button>
+      <p class="disclaimer" data-i18n="inv_disclaimer">Einfache Rechnung (Bedarf − Bestand). Automatisches Lernen aus echtem Verbrauch folgt später.</p>
+    </section>
+
+    <!-- MORE -->
+    <section id="tab-more" class="tab-pane">
+      <h2 class="page-title" data-i18n="more_title">Mehr</h2>
+      <button class="menu-item" onclick="showTab('expenses')">
+        <span data-i18n="more_expenses">Fixkosten</span><span class="arrow">‹</span>
+      </button>
+      <button class="menu-item" onclick="showTab('hygiene')">
+        <span data-i18n="more_hygiene">Hygiene (HACCP)</span><span class="arrow">‹</span>
+      </button>
+      <button class="menu-item" onclick="showTab('reports')">
+        <span data-i18n="more_reports">Monatsbericht</span><span class="arrow">‹</span>
+      </button>
+      <button class="menu-item" onclick="showTab('breakeven')">
+        <span data-i18n="more_breakeven">Break-even-Rechner</span><span class="arrow">‹</span>
+      </button>
+      <button class="menu-item" onclick="showTab('recipes')">
+        <span data-i18n="more_recipes">Rezeptkalkulation</span><span class="arrow">‹</span>
+      </button>
+      <button class="menu-item" onclick="showTab('goals')">
+        <span data-i18n="more_goals">Monatsziele</span><span class="arrow">‹</span>
+      </button>
+      <button class="menu-item" onclick="showTab('suppliers')">
+        <span data-i18n="more_suppliers">Lieferanten</span><span class="arrow">‹</span>
+      </button>
+      <button class="menu-item" onclick="showTab('scenario')">
+        <span data-i18n="more_scenario">Szenario-Labor</span><span class="arrow">‹</span>
+      </button>
+      <button class="menu-item" onclick="showTab('auditlog')">
+        <span data-i18n="more_auditlog">Änderungsprotokoll</span><span class="arrow">‹</span>
+      </button>
+      <button class="menu-item" onclick="showTab('accountant')">
+        <span data-i18n="more_accountant">Filialen / Steuerberater</span><span class="arrow">‹</span>
+      </button>
+      <button class="menu-item" onclick="showTab('about')">
+        <span data-i18n="more_about">Über Gastrobuch</span><span class="arrow">‹</span>
+      </button>
+    </section>
+
+    <!-- EXPENSES -->
+    <section id="tab-expenses" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="exp_title">Fixkosten</h2>
+      <p class="page-lead" data-i18n="exp_lead">Miete, Strom, Gas, Wasser, Versicherung — alles, was jeden Monat wiederkommt.</p>
+
+      <div class="row-list" id="expList"></div>
+      <button class="btn-dashed" id="btnAddExp" data-i18n="exp_add">+ Ausgabe hinzufügen</button>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="out-row tax"><span data-i18n="exp_total">Fixkosten gesamt</span><span class="val" id="outExpTotal">€ 0,00</span></div>
+      </div>
+      <p class="disclaimer" data-i18n="exp_disclaimer">Nur wiederkehrende Betriebskosten. Anschaffungen mit Abschreibung (AfA) bitte mit dem Steuerberater klären.</p>
+    </section>
+
+    <!-- HYGIENE -->
+    <section id="tab-hygiene" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="hyg_title">Hygiene (HACCP)</h2>
+      <p class="page-lead" id="hygLead" data-i18n="hyg_lead">Tägliche Temperaturkontrolle und Checkliste — Pflicht nach LMHV / EU 852/2004.</p>
+
+      <div class="card">
+        <h3 data-i18n="hyg_temps_title">Kühltemperaturen heute</h3>
+        <div class="row-list" id="tempList"></div>
+        <button class="btn-dashed" id="btnAddTemp" data-i18n="hyg_add_temp">+ Kühleinheit hinzufügen</button>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="hyg_checklist_title">Checkliste heute</h3>
+        <div id="checkList"></div>
+      </div>
+
+      <div class="hyg-status" id="hygStatus"></div>
+      <p class="disclaimer" data-i18n="hyg_disclaimer">Grundcheckliste zur Veranschaulichung. Das vollständige HACCP-Konzept muss einmalig mit einem Hygienefachexperten erstellt werden.</p>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="tab-reports" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="rep_title">Monatsbericht</h2>
+      <p class="page-lead" data-i18n="rep_lead">Alle Bausteine zusammengerechnet — der reale Monatsgewinn.</p>
+
+      <div class="card">
+        <div class="out-row"><span data-i18n="dash_month_sales">Umsatz gesamt</span><span class="val" id="repSales">€ 0,00</span></div>
+        <div class="out-row tax"><span data-i18n="dash_month_tax">Steuer geschätzt</span><span class="val" id="repTax">€ 0,00</span></div>
+        <div class="out-row"><span data-i18n="dash_month_wages">Löhne</span><span class="val" id="repWages">€ 0,00</span></div>
+        <div class="out-row"><span data-i18n="dash_month_expenses">Fixkosten</span><span class="val" id="repExpenses">€ 0,00</span></div>
+      </div>
+      <div class="final-banner">
+        <span data-i18n="dash_month_final">Geschätzter Reingewinn</span>
+        <span class="val" id="repFinal">€ 0,00</span>
+      </div>
+
+      <div id="exportBox" style="display:none; margin-top:16px;">
+        <button type="button" class="btn-primary" id="btnExportCsv" data-i18n="rep_export_btn">📄 Für Steuerberater exportieren (CSV)</button>
+        <p id="exportStatus" style="font-size:12px; color:var(--text-on-ink-dim); margin-top:8px; text-align:center;"></p>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h3 data-i18n="rep_days_title">Tage mit Einträgen</h3>
+        <div id="repDaysList"></div>
+      </div>
+
+      <div class="card" id="wasteCheckCard">
+        <h3 data-i18n="waste_title">Schwund-Check (Wareneinsatz vs. Rezepte)</h3>
+        <div id="wasteCheckBody"></div>
+      </div>
+
+      <p class="disclaimer" data-i18n="rep_disclaimer">Kein Ersatz für die Steuererklärung — nur eine tagesaktuelle Schätzung.</p>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="tab-about" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="about_title">Über Gastrobuch</h2>
+      <div class="card">
+        <p style="font-size:13.5px; line-height:1.9;" data-i18n="about_body">Gastrobuch ist ein früher Arbeitsprototyp für die Restaurant-Buchhaltung: Steuerschätzung, Personalkosten, Lager und Hygieneprotokoll an einem Ort. Alle Daten bleiben lokal in diesem Browser — es gibt noch keine Cloud, kein Login und keine Synchronisierung zwischen Geräten.</p>
+      </div>
+    </section>
+
+    <!-- BREAK-EVEN -->
+    <section id="tab-breakeven" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="be_title">Break-even-Rechner</h2>
+      <p class="page-lead" data-i18n="be_lead">Wie viel Umsatz brauchst du im Monat, um Miete, Löhne und Wareneinsatz zu decken?</p>
+
+      <div class="card">
+        <div class="out-row"><span data-i18n="be_fixed">Fixkosten (Löhne + Fixkosten)</span><span class="val" id="beFixed">€ 0,00</span></div>
+        <div class="field" style="margin-top:12px;">
+          <label data-i18n="be_ratio_label">Wareneinsatzquote (Wareneinkauf in % vom Umsatz)</label>
+          <div class="input-row"><input type="number" id="beRatio" min="0" max="90" step="1" value="30"><span class="unit">%</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="out-row"><span data-i18n="be_monthly">Break-even-Umsatz / Monat</span><span class="val" id="beMonthly">€ 0,00</span></div>
+        <div class="out-row"><span data-i18n="be_daily">Break-even-Umsatz / Tag</span><span class="val" id="beDaily">€ 0,00</span></div>
+        <div class="out-row"><span data-i18n="be_actual">Tatsächlicher Umsatz (dieser Monat)</span><span class="val" id="beActual">€ 0,00</span></div>
+      </div>
+      <div class="final-banner" id="beStatusBanner">
+        <span id="beStatusLabel">—</span>
+        <span class="val" id="beStatusValue">€ 0,00</span>
+      </div>
+      <p class="disclaimer" data-i18n="be_disclaimer">Vereinfachte Schätzung. Geht davon aus, dass Wareneinsatz proportional zum Umsatz steigt und Löhne/Fixkosten monatlich konstant bleiben.</p>
+    </section>
+
+    <!-- RECIPE COSTING -->
+    <section id="tab-recipes" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="rec_title">Rezeptkalkulation</h2>
+      <p class="page-lead" data-i18n="rec_lead">Zutatenkosten pro Gericht eintragen — Gastrobuch zeigt dir Kosten, Marge und Gewinn pro Verkauf.</p>
+
+      <div id="recipesList"></div>
+      <button class="btn-dashed" id="btnAddRecipe" data-i18n="rec_add">+ Gericht hinzufügen</button>
+      <p class="disclaimer" data-i18n="rec_disclaimer">Trage die Zutatenkosten für EINE Portion ein (z.B. 250g Mehl = 0,08 €), nicht den Preis des ganzen Sacks.</p>
+    </section>
+
+    <!-- GOALS -->
+    <section id="tab-goals" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="goals_title">Monatsziele</h2>
+      <p class="page-lead" data-i18n="goals_lead">Setz dir Ziele für diesen Monat — Gastrobuch zeigt dir live, wie nah du dran bist.</p>
+
+      <div class="card">
+        <div class="field">
+          <label data-i18n="goals_target_sales">Umsatzziel</label>
+          <div class="input-row"><span class="unit">€</span><input type="number" id="goalSales" min="0" step="100"></div>
+        </div>
+        <div class="field">
+          <label data-i18n="goals_target_labor">Ziel: Personalkosten (max. % vom Umsatz)</label>
+          <div class="input-row"><input type="number" id="goalLaborPct" min="0" max="100" step="1"><span class="unit">%</span></div>
+        </div>
+        <div class="field">
+          <label data-i18n="goals_target_net">Zielgewinn (Netto)</label>
+          <div class="input-row"><span class="unit">€</span><input type="number" id="goalNet" min="0" step="100"></div>
+        </div>
+      </div>
+
+      <div class="card" id="goalsProgressCard"></div>
+      <p class="disclaimer" data-i18n="goals_disclaimer">Fortschritt basiert auf den bisher erfassten Tagen dieses Monats.</p>
+    </section>
+
+    <!-- SUPPLIERS -->
+    <section id="tab-suppliers" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="sup_title">Lieferanten</h2>
+      <p class="page-lead" data-i18n="sup_lead">Wird automatisch befüllt, wenn du Belege im Verkauf-Tab fotografierst.</p>
+      <div id="suppliersList"></div>
+      <p class="disclaimer" data-i18n="sup_disclaimer">Nur Lieferanten, die beim Fotografieren einer Rechnung erkannt wurden.</p>
+    </section>
+
+    <!-- SCENARIO LAB -->
+    <section id="tab-scenario" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="scn_title">Szenario-Labor</h2>
+      <p class="page-lead" data-i18n="scn_lead">Simuliere eine Entscheidung, bevor du sie triffst — basierend auf diesem Monat.</p>
+
+      <div class="card">
+        <div class="field">
+          <label data-i18n="scn_price_change">Preisänderung</label>
+          <div class="input-row"><input type="number" id="scnPriceChange" value="0" step="1"><span class="unit">%</span></div>
+        </div>
+        <div class="field">
+          <label data-i18n="scn_new_staff">Neue Mitarbeiterstunden / Monat</label>
+          <div class="input-row"><input type="number" id="scnNewStaffHours" value="0" min="0" step="10"></div>
+        </div>
+        <div class="field">
+          <label data-i18n="scn_new_staff_rate">Stundenlohn dafür</label>
+          <div class="input-row"><span class="unit">€</span><input type="number" id="scnNewStaffRate" value="13.90" min="0" step="0.1"></div>
+        </div>
+        <div class="field">
+          <label data-i18n="scn_closed_days">Geschlossene Tage diesen Monat (zusätzlich)</label>
+          <div class="input-row"><input type="number" id="scnClosedDays" value="0" min="0" max="30" step="1"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="scn_compare_title">Vergleich</h3>
+        <div class="out-row"><span data-i18n="scn_col_current">Aktuell (Hochrechnung Monat)</span><span class="val" id="scnCurrentNet">€ 0,00</span></div>
+        <div class="out-row net"><span data-i18n="scn_col_scenario">Mit Szenario</span><span class="val" id="scnScenarioNet">€ 0,00</span></div>
+        <div class="final-banner" id="scnDiffBanner">
+          <span id="scnDiffLabel">—</span>
+          <span class="val" id="scnDiffVal">€ 0,00</span>
+        </div>
+      </div>
+      <p class="disclaimer" data-i18n="scn_disclaimer">Vereinfachte Annahmen: Preisänderung wirkt auf den gesamten Umsatz gleich; geschlossene Tage reduzieren den Umsatz anteilig; Fixkosten bleiben gleich.</p>
+    </section>
+
+    <!-- AUDIT LOG -->
+    <section id="tab-auditlog" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="audit_title">Änderungsprotokoll</h2>
+      <p class="page-lead" data-i18n="audit_lead">Wer hat was geändert — die letzten Einträge, neueste zuerst.</p>
+      <div id="auditLogList"></div>
+      <p class="disclaimer" data-i18n="audit_disclaimer">Einfaches Protokoll auf diesem Gerät. Kein manipulationssicheres Audit-System — dafür wäre eine echte Server-Datenbank nötig.</p>
+    </section>
+
+    <!-- ACCOUNTANT VIEW -->
+    <section id="tab-accountant" class="tab-pane">
+      <button class="back-btn" onclick="showTab('more')" data-i18n="back">‹ Zurück</button>
+      <h2 class="page-title" data-i18n="acc_title">Filialen / Steuerberater-Ansicht</h2>
+      <p class="page-lead" data-i18n="acc_lead">Verbinde dieses Restaurant mit einem gemeinsamen Code — für einen Steuerberater mit mehreren Mandanten ODER einen Besitzer mit mehreren Filialen. Beide sehen alle verbundenen Restaurants an einem Ort.</p>
+
+      <div class="card">
+        <div class="field">
+          <label data-i18n="acc_office_label">Büro-Code (vom Steuerberater vergeben)</label>
+          <div class="input-row"><input type="text" id="accOfficeCode" placeholder="z.B. mueller-stb"></div>
+        </div>
+        <div class="field">
+          <label data-i18n="acc_name_label">Restaurantname</label>
+          <div class="input-row"><input type="text" id="accRestName" placeholder="z.B. Restaurant Ayo"></div>
+        </div>
+        <button class="btn-primary" id="btnSyncAccountant" data-i18n="acc_sync_btn">Diesen Monat synchronisieren</button>
+        <p id="accSyncStatus" style="font-size:12px; color:var(--text-on-ink-dim); margin-top:8px;"></p>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="acc_clients_title">Alle Restaurants dieses Büros</h3>
+        <button class="btn-dashed" id="btnLoadAccountant" data-i18n="acc_load_btn">Aktualisieren</button>
+        <div id="accClientsList" style="margin-top:12px;"></div>
+      </div>
+      <p class="disclaimer" data-i18n="acc_disclaimer">Prototyp: sichtbar für alle, die diesen Büro-Code kennen und in derselben Organisation angemeldet sind. Für den echten Einsatz braucht es echte Konten und Zugriffsrechte pro Kanzlei.</p>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <button data-tab="dashboard" onclick="showTab('dashboard')"><span class="icon">🏠</span><span data-i18n="nav_dashboard">Übersicht</span></button>
+    <button data-tab="sales" onclick="showTab('sales')"><span class="icon">💶</span><span data-i18n="nav_sales">Verkauf</span></button>
+    <button data-tab="staff" onclick="showTab('staff')"><span class="icon">👥</span><span data-i18n="nav_staff">Personal</span></button>
+    <button data-tab="inventory" onclick="showTab('inventory')"><span class="icon">📦</span><span data-i18n="nav_inventory">Lager</span></button>
+    <button data-tab="more" onclick="showTab('more')"><span class="icon">⋯</span><span data-i18n="nav_more">Mehr</span></button>
+  </nav>
+</div>
+
+<script>
+/* ================= i18n ================= */
+var T = {
+  de: {
+    dash_title:'Übersicht', dash_lead:'Dein Tag und dein Monat auf einen Blick.',
+    storage_note:'Hinweis: Alle Daten werden nur lokal in diesem Browser gespeichert (noch keine Cloud-Synchronisierung). Bei einem neuen Gerät oder gelöschten Browserdaten gehen die Einträge verloren.',
+    dash_today_card_title:'Heute', dash_no_entry:'Noch keine Zahlen für heute.', dash_enter_today:'Jetzt eintragen ›',
+    dash_month_title:'Dieser Monat', dash_month_sales:'Umsatz gesamt', dash_month_tax:'Steuer geschätzt',
+    dash_month_wages:'Löhne', dash_month_expenses:'Fixkosten', dash_month_final:'Geschätzter Reingewinn',
+    adv_title:'Restaurant-Berater', adv_ask_btn:'🧠 Wie war dieser Monat?', adv_thinking:'Denkt nach…',
+    health_title:'Restaurant-Gesundheit',
+    adv_err:'Konnte gerade keine Einschätzung geben — später erneut versuchen.',
+    sales_title:'Verkauf & Steuer', sales_lead:'Trage die heutigen Zahlen ein — die Schätzung berechnet sich sofort (7% Speisen / 19% Getränke, gültig seit 2026).',
+    sales_food:'Speisenumsatz (inkl. USt.)', sales_drink:'Getränkeumsatz (inkl. USt.)', sales_purch:'Wareneinkauf heute (inkl. USt.)',
+    sales_delivery:'Lieferdienst-Umsatz (Lieferando/Wolt, inkl. USt.)', sales_commission:'Plattform-Kommission', sales_commission_amount:'Plattform-Kommission',
+    sales_scan_btn:'📷 Beleg fotografieren & berechnen', sales_scan_analyzing:'Analysiere Beleg…', sales_scan_done:'Betrag übernommen ✓',
+    sales_scan_err_generic:'Konnte den Betrag nicht lesen — bitte manuell eingeben.',
+    sales_scan_err_declined:'Zugriff auf Claude wurde nicht erlaubt.',
+    sales_scan_err_rate:'Gerade zu viele Anfragen — kurz warten und erneut versuchen.',
+    sales_save:'Heute speichern', sales_saved:'Gespeichert ✓',
+    sales_result_title:'Sofortschätzung', sales_total:'Umsatz gesamt', sales_vat:'USt. auf Umsatz', sales_vatpurch:'Abziehbare Vorsteuer',
+    sales_vatdue:'USt. fällig heute', sales_net:'Netto heute',
+    sales_history_title:'Letzte Tage', sales_history_empty:'Noch keine gespeicherten Tage.',
+    sales_disclaimer:'Automatische Schätzung, keine Steuerberatung. Wareneinkauf wird vereinfacht mit 7% Vorsteuer gerechnet.',
+    portions_title:'Verkaufte Gerichte heute (für Schwundkontrolle)',
+    waste_title:'Schwund-Check (Wareneinsatz vs. Rezepte)',
+    waste_expected:'Erwarteter Wareneinsatz (aus Rezepten)', waste_actual:'Tatsächlicher Wareneinkauf',
+    waste_ok:'✅ Kein auffälliger Unterschied.', waste_warn:'🚨 Wareneinkauf deutlich höher als erwartet — mögliche Ursachen: Schwund, Überbestellung oder falsche Rezeptkosten.',
+    waste_need_data:'Trage Rezepte und verkaufte Portionen ein, um diese Prüfung zu sehen.',
+    staff_title:'Personal', staff_lead:'Stunden und Stundenlohn — die Minijob-Grenze (603 € seit 2026) wird automatisch geprüft.',
+    staff_add:'+ Mitarbeiter hinzufügen', staff_name_ph:'Name', staff_hours:'Std.', staff_rate:'€/Std.',
+    staff_count:'Mitarbeiter', staff_hours_total:'Stunden gesamt', staff_wages_total:'Löhne gesamt (brutto)',
+    staff_minijob_warn:'⚠ Mindestens ein Mitarbeiter über der Minijob-Grenze — Anmeldung prüfen.',
+    staff_disclaimer:'Nur Bruttolohn (Stunden × Satz). Echte Nettolohnabrechnung und Meldungen brauchen ein zugelassenes Lohnprogramm.',
+    inv_title:'Lager', inv_lead:'Wöchentlicher Bedarf minus aktueller Bestand = automatische Bestellmenge.',
+    inv_summary_label:'Artikel müssen bestellt werden', inv_add:'+ Artikel hinzufügen', inv_name_ph:'Artikelname',
+    inv_needed:'Bedarf/Woche', inv_remaining:'Bestand', inv_order:'Bestellen',
+    inv_disclaimer:'Einfache Rechnung (Bedarf − Bestand). Automatisches Lernen aus echtem Verbrauch folgt später.',
+    more_title:'Mehr', more_expenses:'Fixkosten', more_hygiene:'Hygiene (HACCP)', more_reports:'Monatsbericht', more_breakeven:'Break-even-Rechner', more_recipes:'Rezeptkalkulation', more_accountant:'Filialen / Steuerberater', more_about:'Über Gastrobuch',
+    rec_title:'Rezeptkalkulation', rec_lead:'Zutatenkosten pro Gericht eintragen — Gastrobuch zeigt dir Kosten, Marge und Gewinn pro Verkauf.',
+    rec_add:'+ Gericht hinzufügen', rec_disclaimer:'Trage die Zutatenkosten für EINE Portion ein (z.B. 250g Mehl = 0,08 €), nicht den Preis des ganzen Sacks.',
+    rec_name_ph:'Gerichtname', rec_price_label:'Verkaufspreis', rec_add_ing:'+ Zutat', rec_ing_name_ph:'Zutat', rec_ing_cost_label:'Kosten',
+    rec_cost_total:'Zutatenkosten', rec_margin_eur:'Marge (€)', rec_margin_pct:'Marge (%)',
+    rec_delivery_commission:'Lieferdienst-Kommission', rec_delivery_margin:'Marge über Lieferdienst',
+    rec_delivery_warn:'🚨 Bei dieser Kommission verlierst du Geld über den Lieferdienst — Preis oder Kommission prüfen.',
+    more_goals:'Monatsziele', more_suppliers:'Lieferanten', more_scenario:'Szenario-Labor', more_auditlog:'Änderungsprotokoll',
+    scn_title:'Szenario-Labor', scn_lead:'Simuliere eine Entscheidung, bevor du sie triffst — basierend auf diesem Monat.',
+    scn_price_change:'Preisänderung', scn_new_staff:'Neue Mitarbeiterstunden / Monat', scn_new_staff_rate:'Stundenlohn dafür',
+    scn_closed_days:'Geschlossene Tage diesen Monat (zusätzlich)',
+    scn_compare_title:'Vergleich', scn_col_current:'Aktuell (Hochrechnung Monat)', scn_col_scenario:'Mit Szenario',
+    scn_diff_more:'Mehr Gewinn im Szenario', scn_diff_less:'Weniger Gewinn im Szenario',
+    scn_disclaimer:'Vereinfachte Annahmen: Preisänderung wirkt auf den gesamten Umsatz gleich; geschlossene Tage reduzieren den Umsatz anteilig; Fixkosten bleiben gleich.',
+    audit_title:'Änderungsprotokoll', audit_lead:'Wer hat was geändert — die letzten Einträge, neueste zuerst.',
+    audit_disclaimer:'Einfaches Protokoll auf diesem Gerät. Kein manipulationssicheres Audit-System — dafür wäre eine echte Server-Datenbank nötig.',
+    audit_empty:'Noch keine Änderungen protokolliert.',
+    goals_title:'Monatsziele', goals_lead:'Setz dir Ziele für diesen Monat — Gastrobuch zeigt dir live, wie nah du dran bist.',
+    goals_target_sales:'Umsatzziel', goals_target_labor:'Ziel: Personalkosten (max. % vom Umsatz)', goals_target_net:'Zielgewinn (Netto)',
+    goals_disclaimer:'Fortschritt basiert auf den bisher erfassten Tagen dieses Monats.',
+    goals_progress_sales:'Umsatz', goals_progress_labor:'Personalkosten', goals_progress_net:'Gewinn',
+    goals_status_ok:'auf Kurs', goals_status_off:'nicht auf Kurs', goals_no_target:'Kein Ziel gesetzt.',
+    sup_title:'Lieferanten', sup_lead:'Wird automatisch befüllt, wenn du Belege im Verkauf-Tab fotografierst.',
+    sup_disclaimer:'Nur Lieferanten, die beim Fotografieren einer Rechnung erkannt wurden.',
+    sup_empty:'Noch keine Lieferanten erfasst.', sup_invoices:'Belege', sup_total:'Gesamt', sup_last:'Letzter Betrag',
+    cash_title:'Kassenprognose', cash_projection:'Prognose bis Monatsende (nach Löhnen &amp; Fixkosten)',
+    be_title:'Break-even-Rechner', be_lead:'Wie viel Umsatz brauchst du im Monat, um Miete, Löhne und Wareneinsatz zu decken?',
+    be_fixed:'Fixkosten (Löhne + Fixkosten)', be_ratio_label:'Wareneinsatzquote (Wareneinkauf in % vom Umsatz)',
+    be_monthly:'Break-even-Umsatz / Monat', be_daily:'Break-even-Umsatz / Tag', be_actual:'Tatsächlicher Umsatz (dieser Monat)',
+    be_disclaimer:'Vereinfachte Schätzung. Geht davon aus, dass Wareneinsatz proportional zum Umsatz steigt und Löhne/Fixkosten monatlich konstant bleiben.',
+    acc_title:'Filialen / Steuerberater-Ansicht', acc_lead:'Verbinde dieses Restaurant mit einem gemeinsamen Code — für einen Steuerberater mit mehreren Mandanten ODER einen Besitzer mit mehreren Filialen. Beide sehen alle verbundenen Restaurants an einem Ort.',
+    acc_office_label:'Büro-Code (vom Steuerberater vergeben)', acc_name_label:'Restaurantname', acc_sync_btn:'Diesen Monat synchronisieren',
+    acc_clients_title:'Alle Restaurants dieses Büros', acc_load_btn:'Aktualisieren',
+    acc_disclaimer:'Prototyp: sichtbar für alle, die diesen Büro-Code kennen und in derselben Organisation angemeldet sind. Für den echten Einsatz braucht es echte Konten und Zugriffsrechte pro Kanzlei.',
+    back:'‹ Zurück',
+    exp_title:'Fixkosten', exp_lead:'Miete, Strom, Gas, Wasser, Versicherung — alles, was jeden Monat wiederkommt.',
+    exp_add:'+ Ausgabe hinzufügen', exp_name_ph:'Bezeichnung', exp_total:'Fixkosten gesamt',
+    exp_disclaimer:'Nur wiederkehrende Betriebskosten. Anschaffungen mit Abschreibung (AfA) bitte mit dem Steuerberater klären.',
+    hyg_title:'Hygiene (HACCP)', hyg_lead:'Tägliche Temperaturkontrolle und Checkliste — Pflicht nach LMHV / EU 852/2004.',
+    hyg_temps_title:'Kühltemperaturen heute', hyg_add_temp:'+ Kühleinheit hinzufügen',
+    hyg_cooling:'Kühlung (<5°C)', hyg_freezing:'Gefrier (<−18°C)',
+    hyg_checklist_title:'Checkliste heute', hyg_status_ok:'✅ Alles in Ordnung heute', hyg_status_warn:'⚠ Etwas braucht Aufmerksamkeit heute',
+    hyg_disclaimer:'Grundcheckliste zur Veranschaulichung. Das vollständige HACCP-Konzept muss einmalig mit einem Hygienefachexperten erstellt werden.',
+    hyg_name_ph:'Einheit',
+    rep_title:'Monatsbericht', rep_lead:'Alle Bausteine zusammengerechnet — der reale Monatsgewinn.',
+    rep_days_title:'Tage mit Einträgen', rep_days_empty:'Noch keine Einträge diesen Monat.',
+    rep_export_btn:'📄 Für Steuerberater exportieren (CSV)', rep_export_done:'Datei gespeichert ✓', rep_export_err:'Export nicht möglich — bitte erneut versuchen.',
+    rep_disclaimer:'Kein Ersatz für die Steuererklärung — nur eine tagesaktuelle Schätzung.',
+    about_title:'Über Gastrobuch',
+    about_body:'Gastrobuch ist ein früher Arbeitsprototyp für die Restaurant-Buchhaltung: Steuerschätzung, Personalkosten, Lager und Hygieneprotokoll an einem Ort. Alle Daten bleiben lokal in diesem Browser — es gibt noch keine Cloud, kein Login und keine Synchronisierung zwischen Geräten.',
+    nav_dashboard:'Übersicht', nav_sales:'Verkauf', nav_staff:'Personal', nav_inventory:'Lager', nav_more:'Mehr',
+    check_labels:['Arbeitsflächen und Küche gereinigt','Haltbarkeitsdaten der Vorräte geprüft','Wareneingang dokumentiert','Sauberkeit der Gästetoiletten','Keine Anzeichen von Schädlingen']
+  },
+  ar: {
+    dash_title:'الرئيسية', dash_lead:'يومك وشهرك في نظرة واحدة.',
+    storage_note:'ملاحظة: كل البيانات متخزنة محلياً في المتصفح ده بس (لسه من غير مزامنة سحابية). لو استخدمت جهاز تاني أو مسحت بيانات المتصفح، هتفقد البيانات.',
+    dash_today_card_title:'النهاردة', dash_no_entry:'لسه مفيش أرقام لليوم.', dash_enter_today:'سجّل دلوقتي ›',
+    dash_month_title:'الشهر ده', dash_month_sales:'إجمالي المبيعات', dash_month_tax:'الضريبة التقديرية',
+    dash_month_wages:'الأجور', dash_month_expenses:'المصاريف الثابتة', dash_month_final:'الصافي التقديري',
+    adv_title:'مستشار المطعم الذكي', adv_ask_btn:'🧠 إزاي كان الشهر ده؟', adv_thinking:'بيفكر…',
+    health_title:'صحة المطعم',
+    adv_err:'مقدرتش أدّي تقييم دلوقتي - جرب تاني بعدين.',
+    sales_title:'المبيعات والضريبة', sales_lead:'سجّل أرقام اليوم - التقدير بيتحسب فوراً (7% مأكولات / 19% مشروبات، ساري من 2026).',
+    sales_food:'مبيعات المأكولات (شامل الضريبة)', sales_drink:'مبيعات المشروبات (شامل الضريبة)', sales_purch:'مشتريات اليوم (شامل الضريبة)',
+    sales_delivery:'مبيعات التوصيل (Lieferando/Wolt، شامل الضريبة)', sales_commission:'عمولة منصة التوصيل', sales_commission_amount:'عمولة منصة التوصيل',
+    sales_scan_btn:'📷 صوّر الفاتورة واحسبها أوتوماتيك', sales_scan_analyzing:'بيحلل الفاتورة…', sales_scan_done:'اتحسب المبلغ ✓',
+    sales_scan_err_generic:'مقدرتش أقرا المبلغ - أدخله يدوي.',
+    sales_scan_err_declined:'مفيش إذن لاستخدام Claude في الصفحة دي.',
+    sales_scan_err_rate:'طلبات كتير دلوقتي - استنى شوية وجرب تاني.',
+    sales_save:'حفظ اليوم', sales_saved:'اتحفظ ✓',
+    sales_result_title:'التقدير الفوري', sales_total:'إجمالي المبيعات', sales_vat:'ضريبة المبيعات', sales_vatpurch:'ضريبة مشتريات قابلة للخصم',
+    sales_vatdue:'الضريبة المستحقة اليوم', sales_net:'الصافي اليوم',
+    sales_history_title:'آخر الأيام', sales_history_empty:'لسه مفيش أيام متحفظة.',
+    sales_disclaimer:'تقدير آلي، مش استشارة ضريبية. المشتريات محسوبة بشكل مبسط بضريبة 7%.',
+    portions_title:'عدد الأطباق المباعة اليوم (لكشف الهدر)',
+    waste_title:'فحص الهدر (المشتريات مقابل الوصفات)',
+    waste_expected:'المتوقع استهلاكه (حسب الوصفات)', waste_actual:'المشتريات الفعلية',
+    waste_ok:'✅ مفيش فرق ملحوظ.', waste_warn:'🚨 المشتريات أعلى بكتير من المتوقع - ممكن يكون في هدر، شراء زيادة عن الحاجة، أو تكلفة وصفة غلط.',
+    waste_need_data:'سجّل الوصفات وعدد الأطباق المباعة عشان الفحص ده يبان.',
+    staff_title:'الموظفين', staff_lead:'الساعات وسعر الساعة - حد الميني جوب (603 يورو من 2026) بيتفحص أوتوماتيك.',
+    staff_add:'+ إضافة موظف', staff_name_ph:'الاسم', staff_hours:'ساعة', staff_rate:'€/ساعة',
+    staff_count:'عدد الموظفين', staff_hours_total:'إجمالي الساعات', staff_wages_total:'إجمالي الأجور (إجمالي)',
+    staff_minijob_warn:'⚠ في موظف على الأقل تخطى حد الميني جوب - راجع تسجيله.',
+    staff_disclaimer:'الأجر الإجمالي بس (ساعات × سعر). حساب الصافي الفعلي والتبليغ محتاج برنامج رواتب معتمد.',
+    inv_title:'المخزون', inv_lead:'المطلوب أسبوعياً ناقص المتبقي = كمية الطلب أوتوماتيك.',
+    inv_summary_label:'صنف محتاج طلب', inv_add:'+ إضافة صنف', inv_name_ph:'اسم الصنف',
+    inv_needed:'مطلوب/أسبوع', inv_remaining:'متبقي', inv_order:'اطلب',
+    inv_disclaimer:'حساب بسيط (مطلوب - متبقي). التعلم من الاستهلاك الفعلي هيتضاف لاحقاً.',
+    more_title:'المزيد', more_expenses:'المصاريف الثابتة', more_hygiene:'الصحة (HACCP)', more_reports:'التقرير الشهري', more_breakeven:'حاسبة نقطة التعادل', more_recipes:'تكلفة الوصفات', more_accountant:'الفروع / المحاسب', more_about:'عن Gastrobuch',
+    rec_title:'تكلفة الوصفات', rec_lead:'سجّل تكلفة مكونات كل طبق - Gastrobuch يوريك التكلفة والهامش والربح لكل مرة بيتباع.',
+    rec_add:'+ إضافة طبق', rec_disclaimer:'اكتب تكلفة المكونات لطبق واحد بس (مثلاً 250 جرام دقيق = 0.08 يورو)، مش سعر الكيس كامل.',
+    rec_name_ph:'اسم الطبق', rec_price_label:'سعر البيع', rec_add_ing:'+ مكوّن', rec_ing_name_ph:'المكوّن', rec_ing_cost_label:'التكلفة',
+    rec_cost_total:'تكلفة المكونات', rec_margin_eur:'الهامش (€)', rec_margin_pct:'الهامش (%)',
+    rec_delivery_commission:'عمولة التوصيل', rec_delivery_margin:'الهامش عبر التوصيل',
+    rec_delivery_warn:'🚨 بالعمولة دي بتخسر فلوس في بيع الطبق ده عن طريق التوصيل - راجع السعر أو العمولة.',
+    more_goals:'أهداف الشهر', more_suppliers:'الموردين', more_scenario:'مختبر السيناريوهات', more_auditlog:'سجل التعديلات',
+    scn_title:'مختبر السيناريوهات', scn_lead:'جرّب قرار قبل ما تاخده - مبني على أرقام الشهر ده.',
+    scn_price_change:'تغيير السعر', scn_new_staff:'ساعات موظف جديد شهرياً', scn_new_staff_rate:'سعر الساعة بتاعه',
+    scn_closed_days:'أيام إغلاق إضافية الشهر ده',
+    scn_compare_title:'المقارنة', scn_col_current:'الوضع الحالي (توقع الشهر)', scn_col_scenario:'مع السيناريو',
+    scn_diff_more:'ربح أكتر في السيناريو', scn_diff_less:'ربح أقل في السيناريو',
+    scn_disclaimer:'افتراضات مبسطة: تغيير السعر بيأثر على كل المبيعات بنفس النسبة، أيام الإغلاق بتقلل المبيعات نسبياً، والمصاريف الثابتة بتفضل زي ما هي.',
+    audit_title:'سجل التعديلات', audit_lead:'مين عدّل إيه - آخر التعديلات، الأحدث الأول.',
+    audit_disclaimer:'سجل بسيط على الجهاز ده بس. مش نظام تدقيق محصّن ضد التلاعب - ده محتاج قاعدة بيانات سيرفر حقيقية.',
+    audit_empty:'لسه مفيش تعديلات متسجلة.',
+    goals_title:'أهداف الشهر', goals_lead:'حدد أهداف الشهر ده - Gastrobuch يوريك لحظياً قربت منها قد إيه.',
+    goals_target_sales:'هدف المبيعات', goals_target_labor:'هدف: أقصى نسبة أجور من المبيعات', goals_target_net:'هدف الصافي',
+    goals_disclaimer:'التقدم مبني على الأيام المسجلة لحد دلوقتي في الشهر ده.',
+    goals_progress_sales:'المبيعات', goals_progress_labor:'الأجور', goals_progress_net:'الصافي',
+    goals_status_ok:'ماشي كويس', goals_status_off:'مش ماشي زي المخطط', goals_no_target:'لسه محددتش هدف.',
+    sup_title:'الموردين', sup_lead:'بيتملى أوتوماتيك أول ما تصوّر فاتورة في تبويب المبيعات.',
+    sup_disclaimer:'بس الموردين اللي اتعرفوا وقت تصوير فاتورة.',
+    sup_empty:'لسه مفيش موردين متسجلين.', sup_invoices:'فواتير', sup_total:'الإجمالي', sup_last:'آخر مبلغ',
+    cash_title:'توقع الكاش', cash_projection:'توقع نهاية الشهر (بعد الأجور والمصاريف الثابتة)',
+    be_title:'حاسبة نقطة التعادل', be_lead:'محتاج تبيع كام في الشهر عشان تغطي الإيجار والأجور والمشتريات؟',
+    be_fixed:'المصاريف الثابتة (أجور + مصاريف ثابتة)', be_ratio_label:'نسبة تكلفة المكونات (المشتريات كنسبة من المبيعات)',
+    be_monthly:'مبيعات نقطة التعادل / الشهر', be_daily:'مبيعات نقطة التعادل / اليوم', be_actual:'المبيعات الفعلية (الشهر ده)',
+    be_disclaimer:'تقدير مبسط. بيفترض إن المشتريات بتزيد مع المبيعات بنفس النسبة، وإن الأجور والمصاريف الثابتة تقريباً زي بعضها كل شهر.',
+    acc_title:'الفروع / لوحة المحاسب', acc_lead:'اربط المطعم ده بكود مشترك - لمكتب محاسبة عنده أكتر من عميل، أو صاحب أكتر من فرع. الاتنين هيشوفوا كل المطاعم المرتبطة من مكان واحد.',
+    acc_office_label:'كود المكتب (المحاسب بيديهولك)', acc_name_label:'اسم المطعم', acc_sync_btn:'مزامنة أرقام الشهر ده',
+    acc_clients_title:'كل مطاعم المكتب ده', acc_load_btn:'تحديث',
+    acc_disclaimer:'ده نموذج أولي - أي حد يعرف كود المكتب ده ومسجل في نفس المؤسسة يقدر يشوف البيانات. للاستخدام الحقيقي محتاج حسابات وصلاحيات فعلية لكل مكتب محاسبة.',
+    back:'‹ رجوع',
+    exp_title:'المصاريف الثابتة', exp_lead:'إيجار، كهرباء، غاز، مياه، تأمين - كل حاجة بتتكرر كل شهر.',
+    exp_add:'+ إضافة مصروف', exp_name_ph:'اسم المصروف', exp_total:'إجمالي المصاريف الثابتة',
+    exp_disclaimer:'مصاريف تشغيل متكررة بس. مصاريف فيها إهلاك (AfA) راجعها مع المحاسب.',
+    hyg_title:'بروتوكول الصحة (HACCP)', hyg_lead:'فحص درجة الحرارة والتشيك ليست اليومية - إلزامي حسب LMHV / EU 852/2004.',
+    hyg_temps_title:'درجات حرارة اليوم', hyg_add_temp:'+ إضافة وحدة تبريد',
+    hyg_cooling:'تبريد (أقل من 5°م)', hyg_freezing:'تجميد (أقل من −18°م)',
+    hyg_checklist_title:'تشيك ليست اليوم', hyg_status_ok:'✅ كل حاجة سليمة النهاردة', hyg_status_warn:'⚠ في نقطة محتاجة مراجعة النهاردة',
+    hyg_disclaimer:'قائمة أساسية للتوضيح. بروتوكول HACCP الكامل لازم يتبني مرة واحدة مع مختص نظافة غذائية.',
+    hyg_name_ph:'اسم الوحدة',
+    rep_title:'التقرير الشهري', rep_lead:'كل الوحدات مجمّعة مع بعض - الصافي الحقيقي للشهر.',
+    rep_days_title:'الأيام المسجلة', rep_days_empty:'لسه مفيش أيام متسجلة الشهر ده.',
+    rep_export_btn:'📄 تصدير للمحاسب (CSV)', rep_export_done:'اتحفظ الملف ✓', rep_export_err:'التصدير مش شغال دلوقتي - جرب تاني.',
+    rep_disclaimer:'مش بديل عن الإقرار الضريبي - تقدير يومي بس.',
+    about_title:'عن Gastrobuch',
+    about_body:'Gastrobuch نموذج عمل مبكر لمحاسبة المطاعم: تقدير الضريبة، تكلفة الموظفين، المخزون، وبروتوكول الصحة في مكان واحد. كل البيانات متخزنة محلياً في المتصفح - لسه مفيش سحابة ولا تسجيل دخول ولا مزامنة بين الأجهزة.',
+    nav_dashboard:'الرئيسية', nav_sales:'المبيعات', nav_staff:'الموظفين', nav_inventory:'المخزون', nav_more:'المزيد',
+    check_labels:['تنظيف أسطح العمل والمطبخ','فحص تواريخ صلاحية المخزون','تسجيل فحص البضاعة الواردة','نظافة دورات المياه للعملاء','لا توجد آثار حشرات أو قوارض']
+  }
+};
+var LANG = localStorage.getItem('daftar_lang') || 'de';
+
+/* ================= COUNTRY / TAX PROFILES ================= */
+var COUNTRIES = {
+  de: {
+    flag:'🇩🇪', code:'DE', currency:'€', currencyPos:'before', locale:'de-DE',
+    vatMode:'split', vatFood:7, vatDrink:19,
+    minijob:603, minWage:13.90,
+    name:{de:'Deutschland', ar:'ألمانيا'},
+    hygieneLaw:{de:'LMHV / EU 852/2004', ar:'LMHV / لائحة الاتحاد الأوروبي 852/2004'}
+  },
+  sa: {
+    flag:'🇸🇦', code:'SA', currency:'ر.س', currencyPos:'after', locale:'ar-SA',
+    vatMode:'flat', vatRate:15,
+    minijob:null, minWage:null,
+    name:{de:'Saudi-Arabien', ar:'السعودية'},
+    hygieneLaw:{de:'SFDA (Saudi Food & Drug Authority)', ar:'الهيئة العامة للغذاء والدواء (SFDA)'}
+  },
+  ae: {
+    flag:'🇦🇪', code:'AE', currency:'د.إ', currencyPos:'after', locale:'ar-AE',
+    vatMode:'flat', vatRate:5,
+    minijob:null, minWage:null,
+    name:{de:'VAE', ar:'الإمارات'},
+    hygieneLaw:{de:'ADAFSA / Dubai Municipality', ar:'ADAFSA / بلدية دبي'}
+  }
+};
+var COUNTRY_ORDER = ['de','sa','ae'];
+var COUNTRY = localStorage.getItem('daftar_country') || 'de';
+function cc(){ return COUNTRIES[COUNTRY]; }
+
+function t(key){ return (T[LANG] && T[LANG][key]!==undefined) ? T[LANG][key] : key; }
+
+/* ================= storage helpers ================= */
+function lsGet(key, fallback){
+  try{ var v = localStorage.getItem(key); return v!==null ? JSON.parse(v) : fallback; }
+  catch(e){ return fallback; }
+}
+function lsSet(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+}
+function pad2(n){ return n<10 ? '0'+n : ''+n; }
+function dateKey(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function todayKey(){ return dateKey(new Date()); }
+function fmtMoney(n){
+  n = n||0;
+  var conf = cc();
+  var num = n.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return conf.currencyPos==='before' ? (conf.currency+' '+num) : (num+' '+conf.currency);
+}
+function uid(){ return 'id'+Math.random().toString(36).slice(2,9); }
+
+/* ================= tax calc helper ================= */
+function calcSale(data){
+  data = data || {};
+  var food = parseFloat(data.food)||0;
+  var drink = parseFloat(data.drink)||0;
+  var delivery = parseFloat(data.delivery)||0;
+  var commissionPct = parseFloat(data.commissionPct)||0;
+  var purch = parseFloat(data.purch)||0;
+
+  var conf = cc();
+  var vatFood, vatDrink, vatDelivery, vatPurchRate;
+  if(conf.vatMode==='split'){
+    vatFood = food * conf.vatFood/(100+conf.vatFood);
+    vatDrink = drink * conf.vatDrink/(100+conf.vatDrink);
+    vatDelivery = delivery * conf.vatFood/(100+conf.vatFood);
+    vatPurchRate = conf.vatFood;
+  } else {
+    vatFood = food * conf.vatRate/(100+conf.vatRate);
+    vatDrink = drink * conf.vatRate/(100+conf.vatRate);
+    vatDelivery = delivery * conf.vatRate/(100+conf.vatRate);
+    vatPurchRate = conf.vatRate;
+  }
+  var vatSalesTotal = vatFood + vatDrink + vatDelivery;
+  var vatPurch = purch * vatPurchRate/(100+vatPurchRate);
+  var vatDue = Math.max(vatSalesTotal - vatPurch, 0);
+  var total = food + drink + delivery;
+  var commissionAmount = delivery * (commissionPct/100);
+  var net = (total - vatSalesTotal) - (purch - vatPurch) - vatDue - commissionAmount;
+  return {total:total, vatSalesTotal:vatSalesTotal, vatPurch:vatPurch, vatDue:vatDue, net:net, commissionAmount:commissionAmount, delivery:delivery};
+}
+
+/* ================= navigation ================= */
+var ALL_TABS = ['dashboard','sales','staff','inventory','more','expenses','hygiene','reports','about','breakeven','accountant','recipes','goals','suppliers','scenario','auditlog'];
+var MAIN_TABS = ['dashboard','sales','staff','inventory','more'];
+
+function showTab(name){
+  ALL_TABS.forEach(function(tb){
+    var el = document.getElementById('tab-'+tb);
+    if(el) el.classList.toggle('active', tb===name);
+  });
+  var highlight = MAIN_TABS.indexOf(name)>=0 ? name : 'more';
+  document.querySelectorAll('.bottom-nav button').forEach(function(btn){
+    btn.classList.toggle('active', btn.getAttribute('data-tab')===highlight);
+  });
+  if(name==='dashboard') renderDashboard();
+  if(name==='sales') renderSales();
+  if(name==='staff') renderStaff();
+  if(name==='inventory') renderInventory();
+  if(name==='expenses') renderExpenses();
+  if(name==='hygiene') renderHygiene();
+  if(name==='reports') renderReports();
+  if(name==='breakeven') renderBreakeven();
+  if(name==='accountant') renderAccountant();
+  if(name==='recipes') renderRecipes();
+  if(name==='goals') renderGoals();
+  if(name==='suppliers') renderSuppliers();
+  if(name==='scenario') renderScenario();
+  if(name==='auditlog') renderAuditLog();
+  window.scrollTo(0,0);
+}
+
+/* ================= i18n apply ================= */
+function applyLang(){
+  document.documentElement.lang = LANG;
+  document.documentElement.dir = LANG==='ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.getElementById('appTitle').textContent = 'Gastrobuch';
+  document.getElementById('langBtn').textContent = LANG==='de' ? 'عربي' : 'DE';
+  document.getElementById('countryBtn').textContent = cc().flag + ' ' + cc().code;
+  var now = new Date();
+  var locale = LANG==='ar' ? 'de-DE' : 'de-DE';
+  document.getElementById('topbarDate').textContent = now.toLocaleDateString(locale, {weekday:'short', day:'2-digit', month:'2-digit'});
+  renderDashboard(); renderSales(); renderStaff(); renderInventory(); renderExpenses(); renderHygiene(); renderReports(); renderBreakeven();
+}
+
+document.getElementById('langBtn').addEventListener('click', function(){
+  LANG = (LANG==='de') ? 'ar' : 'de';
+  localStorage.setItem('daftar_lang', LANG);
+  applyLang();
+});
+
+document.getElementById('countryBtn').addEventListener('click', function(){
+  var idx = COUNTRY_ORDER.indexOf(COUNTRY);
+  COUNTRY = COUNTRY_ORDER[(idx+1) % COUNTRY_ORDER.length];
+  localStorage.setItem('daftar_country', COUNTRY);
+  applyLang();
+});
+
+/* ================= DASHBOARD ================= */
+function monthPrefix(){
+  var d = new Date();
+  return d.getFullYear()+'-'+pad2(d.getMonth()+1);
+}
+function getAllSalesThisMonth(){
+  var prefix = 'daftar_sales_'+monthPrefix();
+  var out = [];
+  for(var i=0;i<localStorage.length;i++){
+    var k = localStorage.key(i);
+    if(k.indexOf(prefix)===0){
+      var v = lsGet(k, null);
+      if(v) out.push({date:k.replace('daftar_sales_',''), data:v});
+    }
+  }
+  out.sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+  return out;
+}
+function getStaffTotal(){
+  var staff = lsGet('daftar_staff', []);
+  var total = 0;
+  staff.forEach(function(s){ total += (parseFloat(s.hours)||0) * (parseFloat(s.rate)||0); });
+  return total;
+}
+function getExpensesTotal(){
+  var exp = lsGet('daftar_expenses', []);
+  var total = 0;
+  exp.forEach(function(e){ total += parseFloat(e.amount)||0; });
+  return total;
+}
+function renderDashboard(){
+  var pane = document.getElementById('tab-dashboard');
+  if(!pane.classList.contains('active')) { /* still compute for other views */ }
+
+  var d = new Date();
+  document.getElementById('todayCardDate').textContent = d.toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+
+  var todayEntry = lsGet('daftar_sales_'+todayKey(), null);
+  var body = document.getElementById('todayCardBody');
+  if(todayEntry){
+    var r = calcSale(todayEntry);
+    body.innerHTML =
+      '<div class="r-row"><span>'+t('sales_total')+'</span><span class="val">'+fmtMoney(r.total)+'</span></div>'+
+      '<div class="r-row"><span>'+t('sales_vatdue')+'</span><span class="val">'+fmtMoney(r.vatDue)+'</span></div>'+
+      '<div class="r-row"><span>'+t('sales_net')+'</span><span class="val" style="color:#1F6B4D;">'+fmtMoney(r.net)+'</span></div>';
+  } else {
+    body.innerHTML = '<div class="r-empty">'+t('dash_no_entry')+'<br><a href="#" onclick="showTab(\'sales\');return false;" style="color:#1F6B4D;">'+t('dash_enter_today')+'</a></div>';
+  }
+
+  var monthSales = getAllSalesThisMonth();
+  var totalSales=0, totalTax=0;
+  monthSales.forEach(function(entry){
+    var r = calcSale(entry.data);
+    totalSales += r.total;
+    totalTax += r.vatDue;
+  });
+  var wages = getStaffTotal();
+  var expenses = getExpensesTotal();
+  var monthNetFromSales = 0;
+  monthSales.forEach(function(entry){
+    var r = calcSale(entry.data);
+    monthNetFromSales += r.net;
+  });
+  var finalNet = monthNetFromSales - wages - expenses;
+
+  var cashCard = document.getElementById('cashForecastCard');
+  if(monthSales.length >= 2){
+    var avgDailyNet = monthNetFromSales / monthSales.length;
+    var projectedGross = avgDailyNet * 30;
+    var projectedFinal = projectedGross - wages - expenses;
+    cashCard.style.display = 'block';
+    document.getElementById('cashProjectionVal').textContent = fmtMoney(projectedFinal);
+  } else {
+    cashCard.style.display = 'none';
+  }
+
+  document.getElementById('dashMonthSales').textContent = fmtMoney(totalSales);
+  document.getElementById('dashMonthTax').textContent = fmtMoney(totalTax);
+  document.getElementById('dashMonthWages').textContent = fmtMoney(wages);
+  document.getElementById('dashMonthExpenses').textContent = fmtMoney(expenses);
+  document.getElementById('dashMonthFinal').textContent = fmtMoney(finalNet);
+
+  renderAlerts(totalSales, wages);
+}
+
+function renderAlerts(totalSales, wages){
+  var alerts = [];
+  var reasons = [];
+  var score = 100;
+  var isAr = LANG!=='de';
+
+  if(totalSales>0){
+    var laborPct = (wages/totalSales)*100;
+    if(laborPct > 35){
+      alerts.push({tab:'staff', text: isAr
+        ? ('🚨 نسبة تكلفة العمالة '+laborPct.toFixed(0)+'% من المبيعات - أعلى من المعدل الصحي (حوالي 30-35%).')
+        : ('🚨 Personalkostenanteil '+laborPct.toFixed(0)+'% vom Umsatz — über dem gesunden Bereich (ca. 30-35%).')});
+      score -= 20;
+      reasons.push(isAr ? '🔴 تكلفة العمالة مرتفعة' : '🔴 Personalkosten zu hoch');
+    } else if(laborPct > 30){
+      score -= 8;
+      reasons.push(isAr ? '🟡 تكلفة العمالة قريبة من الحد الأعلى' : '🟡 Personalkosten nahe der Obergrenze');
+    } else {
+      reasons.push(isAr ? '🟢 تكلفة العمالة ممتازة' : '🟢 Personalkosten sehr gut');
+    }
+  }
+
+  var staff = lsGet('daftar_staff', []);
+  var minijobLimit = cc().minijob;
+  if(minijobLimit){
+    staff.forEach(function(s){
+      var wage = (parseFloat(s.hours)||0)*(parseFloat(s.rate)||0);
+      if(wage > minijobLimit){
+        alerts.push({tab:'staff', text: isAr
+          ? ('🚨 '+(s.name||'موظف')+' تخطى حد الميني جوب ('+minijobLimit+' يورو).')
+          : ('🚨 '+(s.name||'Mitarbeiter')+' über der Minijob-Grenze ('+minijobLimit+' €).')});
+        score -= 10;
+      }
+    });
+  }
+
+  var inv = lsGet('daftar_inventory', []);
+  var needOrderCount = 0;
+  inv.forEach(function(it){
+    var needed = parseFloat(it.needed)||0;
+    var remaining = parseFloat(it.remaining)||0;
+    if(needed>0 && remaining <= needed*0.15){
+      needOrderCount++;
+      alerts.push({tab:'inventory', text: isAr
+        ? ('🚨 '+(it.name||'صنف')+' هيخلص قريب - متبقي '+remaining+' '+(it.unit||''))
+        : ('🚨 '+(it.name||'Artikel')+' wird bald knapp — nur noch '+remaining+' '+(it.unit||'')+' übrig.')});
+    }
+  });
+  if(needOrderCount>0){
+    score -= Math.min(needOrderCount*5, 20);
+    reasons.push(isAr ? ('🟡 '+needOrderCount+' صنف محتاج طلب') : ('🟡 '+needOrderCount+' Artikel müssen bestellt werden'));
+  } else if(inv.length>0){
+    reasons.push(isAr ? '🟢 المخزون جيد' : '🟢 Lagerbestand gut');
+  }
+
+  var recipes = lsGet('daftar_recipes', []);
+  if(recipes.length>0){
+    var marginSum=0, marginCount=0;
+    recipes.forEach(function(r){
+      var costTotal=0;
+      (r.ingredients||[]).forEach(function(ing){ costTotal += parseFloat(ing.cost)||0; });
+      var price = parseFloat(r.price)||0;
+      if(price>0){ marginSum += ((price-costTotal)/price*100); marginCount++; }
+    });
+    if(marginCount>0){
+      var avgMargin = marginSum/marginCount;
+      if(avgMargin < 60){
+        score -= 15;
+        reasons.push(isAr ? '🔴 هامش الربح في الوصفات منخفض' : '🔴 Marge bei Rezepten niedrig');
+        alerts.push({tab:'recipes', text: isAr ? '🚨 هامش ربح بعض الوصفات منخفض - راجع الأسعار.' : '🚨 Marge bei manchen Rezepten niedrig — Preise prüfen.'});
+      } else {
+        reasons.push(isAr ? '🟢 هامش ربح الوصفات كويس' : '🟢 Rezeptmarge gut');
+      }
+    }
+  }
+
+  var goals = lsGet('daftar_goals', {sales:0, laborPct:0, net:0});
+  if(goals.laborPct>0 && totalSales>0 && (wages/totalSales*100) > goals.laborPct){
+    alerts.push({tab:'goals', text: isAr ? '🚨 نسبة الأجور تخطت هدفك الشهري.' : '🚨 Personalkosten über deinem Monatsziel.'});
+  }
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  var emoji = score>=75 ? '🟢' : (score>=50 ? '🟡' : '🔴');
+  document.getElementById('healthScoreVal').textContent = score;
+  document.getElementById('healthEmoji').textContent = emoji;
+  document.getElementById('healthReasons').innerHTML = reasons.map(function(r){ return '<div>'+r+'</div>'; }).join('');
+
+  var hour = new Date().getHours();
+  var greetWord = isAr ? (hour<12 ? 'صباح الخير' : (hour<18 ? 'مساء الخير' : 'مساء الخير')) : (hour<12 ? 'Guten Morgen' : (hour<18 ? 'Guten Tag' : 'Guten Abend'));
+  var greetEl = document.getElementById('briefingGreeting');
+  var subEl = document.getElementById('briefingSub');
+  if(alerts.length===0){
+    greetEl.textContent = greetWord + ' 👋 — ' + (isAr ? 'كل حاجة تمام النهاردة ✅' : 'heute ist alles im grünen Bereich ✅');
+    subEl.textContent = '';
+  } else {
+    greetEl.textContent = greetWord + ' 👋 — ' + (isAr ? ('عندك '+alerts.length+' نقطة محتاجة انتباهك النهاردة') : ('du hast heute '+alerts.length+' Punkte, die Aufmerksamkeit brauchen'));
+    subEl.textContent = alerts[0].text.replace(/^🚨\s*/,'');
+  }
+
+  var box = document.getElementById('alertsBox');
+  var openLabel = isAr ? 'افتح ‹' : 'öffnen ›';
+  box.innerHTML = alerts.map(function(a){
+    return '<div class="alert-item" style="justify-content:space-between; align-items:center;">'+
+      '<span>'+a.text+'</span>'+
+      '<button class="btn-link" style="white-space:nowrap; flex-shrink:0; margin-inline-start:10px;" onclick="showTab(\''+a.tab+'\')">'+openLabel+'</button>'+
+    '</div>';
+  }).join('');
+}
+
+/* ================= SALES TAB ================= */
+function renderSales(){
+  var conf = cc();
+  var rateText = conf.vatMode==='split' ? (conf.vatFood+'% / '+conf.vatDrink+'%') : (conf.vatRate+'%');
+  var leadTxt = LANG==='de'
+    ? ('Trage die heutigen Zahlen ein — die Schätzung berechnet sich sofort (USt. '+rateText+').')
+    : ('سجّل أرقام اليوم - التقدير بيتحسب فوراً (ضريبة '+rateText+').');
+  document.getElementById('salesLead').textContent = leadTxt;
+
+  var todayEntry = lsGet('daftar_sales_'+todayKey(), null);
+  document.getElementById('inFood').value = todayEntry ? todayEntry.food : '';
+  document.getElementById('inDrink').value = todayEntry ? todayEntry.drink : '';
+  document.getElementById('inDelivery').value = todayEntry ? (todayEntry.delivery||0) : 0;
+  document.getElementById('inCommission').value = todayEntry ? (todayEntry.commissionPct!=null ? todayEntry.commissionPct : 30) : 30;
+  document.getElementById('inPurch').value = todayEntry ? todayEntry.purch : '';
+
+  var recipes = lsGet('daftar_recipes', []);
+  var portionsBox = document.getElementById('portionsBox');
+  var portionsList = document.getElementById('portionsList');
+  if(recipes.length>0){
+    portionsBox.style.display = 'block';
+    var savedPortions = (todayEntry && todayEntry.portions) || {};
+    portionsList.innerHTML = recipes.map(function(r){
+      var val = savedPortions[r.id] || 0;
+      return '<div class="field"><label>'+(r.name||'—')+'</label>'+
+        '<div class="input-row"><input type="number" class="portion-input" data-rid="'+r.id+'" min="0" step="1" value="'+val+'"><span class="unit">×</span></div></div>';
+    }).join('');
+  } else {
+    portionsBox.style.display = 'none';
+  }
+
+  updateSaleResult();
+  renderSalesHistory();
+}
+function updateSaleResult(){
+  var data = {
+    food: document.getElementById('inFood').value,
+    drink: document.getElementById('inDrink').value,
+    delivery: document.getElementById('inDelivery').value,
+    commissionPct: document.getElementById('inCommission').value,
+    purch: document.getElementById('inPurch').value
+  };
+  var r = calcSale(data);
+  document.getElementById('outSaleTotal').textContent = fmtMoney(r.total);
+  document.getElementById('outSaleVat').textContent = fmtMoney(r.vatSalesTotal);
+  document.getElementById('outSaleVatPurch').textContent = fmtMoney(r.vatPurch);
+  document.getElementById('outSaleVatDue').textContent = fmtMoney(r.vatDue);
+  document.getElementById('outSaleNet').textContent = fmtMoney(r.net);
+  var commRow = document.getElementById('commissionRow');
+  if(r.delivery > 0){
+    commRow.style.display = 'flex';
+    document.getElementById('outCommission').textContent = fmtMoney(r.commissionAmount);
+  } else {
+    commRow.style.display = 'none';
+  }
+}
+['inFood','inDrink','inDelivery','inCommission','inPurch'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', updateSaleResult);
+});
+document.getElementById('btnSaveSales').addEventListener('click', function(){
+  var data = {
+    food: parseFloat(document.getElementById('inFood').value)||0,
+    drink: parseFloat(document.getElementById('inDrink').value)||0,
+    delivery: parseFloat(document.getElementById('inDelivery').value)||0,
+    commissionPct: parseFloat(document.getElementById('inCommission').value)||0,
+    purch: parseFloat(document.getElementById('inPurch').value)||0
+  };
+  var portions = {};
+  document.querySelectorAll('.portion-input').forEach(function(inp){
+    portions[inp.getAttribute('data-rid')] = parseFloat(inp.value)||0;
+  });
+  data.portions = portions;
+  lsSet('daftar_sales_'+todayKey(), data);
+  logAudit('Verkauf gespeichert', todayKey()+': '+fmtMoney(data.food+data.drink+(data.delivery||0)));
+  var btn = document.getElementById('btnSaveSales');
+  var original = t('sales_save');
+  btn.textContent = t('sales_saved');
+  setTimeout(function(){ btn.textContent = original; }, 1200);
+  renderSalesHistory();
+});
+function renderSalesHistory(){
+  var box = document.getElementById('salesHistory');
+  var all = [];
+  for(var i=0;i<localStorage.length;i++){
+    var k = localStorage.key(i);
+    if(k.indexOf('daftar_sales_')===0){
+      var v = lsGet(k, null);
+      if(v) all.push({date:k.replace('daftar_sales_',''), data:v});
+    }
+  }
+  all.sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+  all = all.slice(0,7);
+  if(all.length===0){
+    box.innerHTML = '<p style="font-size:13px; color:var(--text-on-ink-dim);">'+t('sales_history_empty')+'</p>';
+    return;
+  }
+  var html = '';
+  all.forEach(function(entry){
+    var r = calcSale(entry.data);
+    html += '<div class="hist-row"><span>'+entry.date+'</span><span class="val">'+fmtMoney(r.net)+'</span></div>';
+  });
+  box.innerHTML = html;
+}
+
+/* ================= STAFF TAB ================= */
+function getStaff(){ return lsGet('daftar_staff', null); }
+function seedStaffIfEmpty(){
+  if(getStaff()===null){
+    lsSet('daftar_staff', [
+      {id:uid(), name:'Lukas', hours:120, rate:14},
+      {id:uid(), name:'Anna', hours:60, rate:13.90}
+    ]);
+  }
+}
+function renderStaff(){
+  seedStaffIfEmpty();
+  var staff = lsGet('daftar_staff', []);
+  var minijobLimit = cc().minijob;
+  var staffLeadTxt = minijobLimit
+    ? (LANG==='de' ? ('Stunden und Stundenlohn — die Minijob-Grenze ('+minijobLimit+' € seit 2026) wird automatisch geprüft.') : ('الساعات وسعر الساعة - حد الميني جوب ('+minijobLimit+' يورو من 2026) بيتفحص أوتوماتيك.'))
+    : (LANG==='de' ? 'Stunden und Stundenlohn pro Mitarbeiter.' : 'الساعات وسعر الساعة لكل موظف.');
+  document.getElementById('staffLead').textContent = staffLeadTxt;
+  var list = document.getElementById('staffList');
+  var html = '';
+  staff.forEach(function(s){
+    var wage = (parseFloat(s.hours)||0) * (parseFloat(s.rate)||0);
+    var warnCls = (minijobLimit && wage > minijobLimit) ? ' warn' : '';
+    html += '<div class="li'+warnCls+'" data-id="'+s.id+'">'+
+      '<div class="li-top">'+
+        '<input type="text" class="plain staff-name" value="'+(s.name||'')+'" placeholder="'+t('staff_name_ph')+'">'+
+        '<button class="remove-btn" onclick="removeStaff(\''+s.id+'\')">✕</button>'+
+      '</div>'+
+      '<div class="li-grid2">'+
+        '<div class="li-cell"><label>'+t('staff_hours')+'</label><input type="number" class="staff-hours" value="'+s.hours+'"></div>'+
+        '<div class="li-cell"><label>'+t('staff_rate')+'</label><input type="number" class="staff-rate" value="'+s.rate+'" step="0.1"></div>'+
+      '</div>'+
+    '</div>';
+  });
+  list.innerHTML = html;
+
+  list.querySelectorAll('.li').forEach(function(row){
+    var id = row.getAttribute('data-id');
+    row.querySelector('.staff-name').addEventListener('input', function(){ updateStaffField(id,'name',this.value); });
+    row.querySelector('.staff-hours').addEventListener('input', function(){ updateStaffField(id,'hours',parseFloat(this.value)||0); });
+    row.querySelector('.staff-rate').addEventListener('input', function(){ updateStaffField(id,'rate',parseFloat(this.value)||0); });
+  });
+
+  var totalHours=0, totalWages=0, anyOver=false;
+  staff.forEach(function(s){
+    totalHours += parseFloat(s.hours)||0;
+    var wage = (parseFloat(s.hours)||0)*(parseFloat(s.rate)||0);
+    totalWages += wage;
+    if(minijobLimit && wage > minijobLimit) anyOver=true;
+  });
+  document.getElementById('outStaffCount').textContent = staff.length;
+  document.getElementById('outStaffHours').textContent = totalHours.toLocaleString('de-DE');
+  document.getElementById('outStaffWages').textContent = fmtMoney(totalWages);
+  document.getElementById('minijobWarning').style.display = (minijobLimit && anyOver) ? 'block' : 'none';
+}
+function updateStaffField(id, field, value){
+  var staff = lsGet('daftar_staff', []);
+  staff.forEach(function(s){ if(s.id===id) s[field]=value; });
+  lsSet('daftar_staff', staff);
+  renderStaff();
+}
+function removeStaff(id){
+  var staff = lsGet('daftar_staff', []);
+  var removed = staff.find(function(s){ return s.id===id; });
+  staff = staff.filter(function(s){ return s.id!==id; });
+  lsSet('daftar_staff', staff);
+  logAudit('Mitarbeiter entfernt', removed ? removed.name : id);
+  renderStaff();
+}
+document.getElementById('btnAddStaff').addEventListener('click', function(){
+  var staff = lsGet('daftar_staff', []);
+  staff.push({id:uid(), name:'', hours:0, rate:13.90});
+  lsSet('daftar_staff', staff);
+  logAudit('Mitarbeiter hinzugefügt', '');
+  renderStaff();
+});
+
+/* ================= INVENTORY TAB ================= */
+function getInv(){ return lsGet('daftar_inventory', null); }
+function seedInvIfEmpty(){
+  if(getInv()===null){
+    lsSet('daftar_inventory', [
+      {id:uid(), name:'Mehl', unit:'kg', needed:100, remaining:30},
+      {id:uid(), name:'Thunfisch (Dosen)', unit:'Dose', needed:10, remaining:4},
+      {id:uid(), name:'Speiseöl', unit:'l', needed:20, remaining:15},
+      {id:uid(), name:'Reis', unit:'kg', needed:40, remaining:25}
+    ]);
+  }
+}
+function renderInventory(){
+  seedInvIfEmpty();
+  var inv = lsGet('daftar_inventory', []);
+  var list = document.getElementById('invList');
+  var html = '';
+  var needCount = 0;
+  inv.forEach(function(it){
+    var order = Math.max((parseFloat(it.needed)||0) - (parseFloat(it.remaining)||0), 0);
+    var warnCls = order>0 ? ' warn' : '';
+    if(order>0) needCount++;
+    html += '<div class="li'+warnCls+'" data-id="'+it.id+'">'+
+      '<div class="li-top">'+
+        '<input type="text" class="plain inv-name" value="'+(it.name||'')+'" placeholder="'+t('inv_name_ph')+'">'+
+        '<input type="text" class="plain inv-unit" value="'+(it.unit||'')+'" style="max-width:56px; text-align:center; color:var(--text-on-ink-dim); font-size:12px;">'+
+        '<button class="remove-btn" onclick="removeInv(\''+it.id+'\')">✕</button>'+
+      '</div>'+
+      '<div class="li-grid3">'+
+        '<div class="li-cell"><label>'+t('inv_needed')+'</label><input type="number" class="inv-needed" value="'+it.needed+'"></div>'+
+        '<div class="li-cell"><label>'+t('inv_remaining')+'</label><input type="number" class="inv-remaining" value="'+it.remaining+'"></div>'+
+        '<div class="li-cell order"><label>'+t('inv_order')+'</label><div class="order-val">'+order.toLocaleString('de-DE')+'</div></div>'+
+      '</div>'+
+    '</div>';
+  });
+  list.innerHTML = html;
+  document.getElementById('invSummaryNum').textContent = needCount;
+
+  list.querySelectorAll('.li').forEach(function(row){
+    var id = row.getAttribute('data-id');
+    row.querySelector('.inv-name').addEventListener('input', function(){ updateInvField(id,'name',this.value); });
+    row.querySelector('.inv-unit').addEventListener('input', function(){ updateInvField(id,'unit',this.value); });
+    row.querySelector('.inv-needed').addEventListener('input', function(){ updateInvField(id,'needed',parseFloat(this.value)||0); });
+    row.querySelector('.inv-remaining').addEventListener('input', function(){ updateInvField(id,'remaining',parseFloat(this.value)||0); });
+  });
+}
+function updateInvField(id, field, value){
+  var inv = lsGet('daftar_inventory', []);
+  inv.forEach(function(it){ if(it.id===id) it[field]=value; });
+  lsSet('daftar_inventory', inv);
+  renderInventory();
+}
+function removeInv(id){
+  var inv = lsGet('daftar_inventory', []);
+  var removed = inv.find(function(it){ return it.id===id; });
+  inv = inv.filter(function(it){ return it.id!==id; });
+  lsSet('daftar_inventory', inv);
+  logAudit('Lagerartikel entfernt', removed ? removed.name : id);
+  renderInventory();
+}
+document.getElementById('btnAddInv').addEventListener('click', function(){
+  var inv = lsGet('daftar_inventory', []);
+  inv.push({id:uid(), name:'', unit:'kg', needed:0, remaining:0});
+  lsSet('daftar_inventory', inv);
+  logAudit('Lagerartikel hinzugefügt', '');
+  renderInventory();
+});
+
+/* ================= EXPENSES TAB ================= */
+function getExp(){ return lsGet('daftar_expenses', null); }
+function seedExpIfEmpty(){
+  if(getExp()===null){
+    lsSet('daftar_expenses', [
+      {id:uid(), name:'Miete', amount:1800},
+      {id:uid(), name:'Strom', amount:320},
+      {id:uid(), name:'Gas', amount:180},
+      {id:uid(), name:'Wasser', amount:90},
+      {id:uid(), name:'Internet & Telefon', amount:60},
+      {id:uid(), name:'Versicherung', amount:150},
+      {id:uid(), name:'Werbung', amount:100},
+      {id:uid(), name:'Sonstiges', amount:120}
+    ]);
+  }
+}
+function renderExpenses(){
+  seedExpIfEmpty();
+  var exp = lsGet('daftar_expenses', []);
+  var list = document.getElementById('expList');
+  var html = '';
+  var total = 0;
+  exp.forEach(function(e){
+    total += parseFloat(e.amount)||0;
+    html += '<div class="li" data-id="'+e.id+'">'+
+      '<div class="li-top">'+
+        '<input type="text" class="plain exp-name" value="'+(e.name||'')+'" placeholder="'+t('exp_name_ph')+'">'+
+        '<div class="input-row" style="max-width:120px;"><span class="unit">€</span><input type="number" class="exp-amount" value="'+e.amount+'"></div>'+
+        '<button class="remove-btn" onclick="removeExp(\''+e.id+'\')">✕</button>'+
+      '</div>'+
+    '</div>';
+  });
+  list.innerHTML = html;
+  document.getElementById('outExpTotal').textContent = fmtMoney(total);
+
+  list.querySelectorAll('.li').forEach(function(row){
+    var id = row.getAttribute('data-id');
+    row.querySelector('.exp-name').addEventListener('input', function(){ updateExpField(id,'name',this.value); });
+    row.querySelector('.exp-amount').addEventListener('input', function(){ updateExpField(id,'amount',parseFloat(this.value)||0); });
+  });
+}
+function updateExpField(id, field, value){
+  var exp = lsGet('daftar_expenses', []);
+  exp.forEach(function(e){ if(e.id===id) e[field]=value; });
+  lsSet('daftar_expenses', exp);
+  renderExpenses();
+}
+function removeExp(id){
+  var exp = lsGet('daftar_expenses', []);
+  var removed = exp.find(function(e){ return e.id===id; });
+  exp = exp.filter(function(e){ return e.id!==id; });
+  lsSet('daftar_expenses', exp);
+  logAudit('Fixkosten-Posten entfernt', removed ? removed.name : id);
+  renderExpenses();
+}
+document.getElementById('btnAddExp').addEventListener('click', function(){
+  var exp = lsGet('daftar_expenses', []);
+  exp.push({id:uid(), name:'', amount:0});
+  logAudit('Fixkosten-Posten hinzugefügt', '');
+  lsSet('daftar_expenses', exp);
+  renderExpenses();
+});
+
+/* ================= HYGIENE TAB ================= */
+function seedHygieneIfEmpty(){
+  var key = 'daftar_hygiene_'+todayKey();
+  if(lsGet(key, null)===null){
+    lsSet(key, {
+      temps:[
+        {id:uid(), name:'Hauptkühlschrank Küche', type:'cooling', value:4},
+        {id:uid(), name:'Fleisch-Gefrierschrank', type:'freezing', value:-19},
+        {id:uid(), name:'Getränkekühlschrank', type:'cooling', value:7}
+      ],
+      checks:[true, true, true, false, true]
+    });
+  }
+}
+function renderHygiene(){
+  var law = cc().hygieneLaw[LANG] || cc().hygieneLaw.de;
+  var hygLeadTxt = LANG==='de'
+    ? ('Tägliche Temperaturkontrolle und Checkliste — Pflicht nach '+law+'.')
+    : ('فحص درجة الحرارة والتشيك ليست اليومية - إلزامي حسب '+law+'.');
+  document.getElementById('hygLead').textContent = hygLeadTxt;
+
+  seedHygieneIfEmpty();
+  var key = 'daftar_hygiene_'+todayKey();
+  var data = lsGet(key, {temps:[], checks:[false,false,false,false,false]});
+
+  var tempList = document.getElementById('tempList');
+  var html = '';
+  var anyBad = false;
+  data.temps.forEach(function(temp){
+    var bad = false;
+    if(temp.type==='cooling' && temp.value>5) bad=true;
+    if(temp.type==='freezing' && temp.value>-18) bad=true;
+    if(bad) anyBad = true;
+    html += '<div class="li'+(bad?' warn':'')+'" data-id="'+temp.id+'">'+
+      '<div class="li-top">'+
+        '<input type="text" class="plain temp-name" value="'+(temp.name||'')+'" placeholder="'+t('hyg_name_ph')+'">'+
+        '<select class="plain temp-type">'+
+          '<option value="cooling"'+(temp.type==='cooling'?' selected':'')+'>'+t('hyg_cooling')+'</option>'+
+          '<option value="freezing"'+(temp.type==='freezing'?' selected':'')+'>'+t('hyg_freezing')+'</option>'+
+        '</select>'+
+        '<button class="remove-btn" onclick="removeTemp(\''+temp.id+'\')">✕</button>'+
+      '</div>'+
+      '<div class="li-grid2">'+
+        '<div class="li-cell" style="grid-column:span 2;"><label>°C</label><input type="number" class="temp-value" value="'+temp.value+'" step="0.5"></div>'+
+      '</div>'+
+    '</div>';
+  });
+  tempList.innerHTML = html;
+
+  tempList.querySelectorAll('.li').forEach(function(row){
+    var id = row.getAttribute('data-id');
+    row.querySelector('.temp-name').addEventListener('input', function(){ updateTempField(id,'name',this.value); });
+    row.querySelector('.temp-type').addEventListener('change', function(){ updateTempField(id,'type',this.value); });
+    row.querySelector('.temp-value').addEventListener('input', function(){ updateTempField(id,'value',parseFloat(this.value)||0); });
+  });
+
+  var checkBox = document.getElementById('checkList');
+  var labels = t('check_labels');
+  var checkHtml = '';
+  for(var i=0;i<labels.length;i++){
+    var checked = data.checks[i] ? 'checked' : '';
+    checkHtml += '<div class="check-item"><input type="checkbox" data-idx="'+i+'" '+checked+'><label>'+labels[i]+'</label></div>';
+  }
+  checkBox.innerHTML = checkHtml;
+  checkBox.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      var d = lsGet(key, {temps:[],checks:[]});
+      d.checks[parseInt(this.getAttribute('data-idx'))] = this.checked;
+      lsSet(key, d);
+      renderHygieneStatus();
+    });
+  });
+
+  renderHygieneStatus();
+}
+function updateTempField(id, field, value){
+  var key = 'daftar_hygiene_'+todayKey();
+  var d = lsGet(key, {temps:[],checks:[]});
+  d.temps.forEach(function(temp){ if(temp.id===id) temp[field]=value; });
+  lsSet(key, d);
+  renderHygiene();
+}
+function removeTemp(id){
+  var key = 'daftar_hygiene_'+todayKey();
+  var d = lsGet(key, {temps:[],checks:[]});
+  d.temps = d.temps.filter(function(temp){ return temp.id!==id; });
+  lsSet(key, d);
+  renderHygiene();
+}
+document.getElementById('btnAddTemp').addEventListener('click', function(){
+  var key = 'daftar_hygiene_'+todayKey();
+  var d = lsGet(key, {temps:[],checks:[false,false,false,false,false]});
+  d.temps.push({id:uid(), name:'', type:'cooling', value:4});
+  lsSet(key, d);
+  renderHygiene();
+});
+function renderHygieneStatus(){
+  var key = 'daftar_hygiene_'+todayKey();
+  var d = lsGet(key, {temps:[],checks:[]});
+  var anyBad = false;
+  d.temps.forEach(function(temp){
+    if(temp.type==='cooling' && temp.value>5) anyBad=true;
+    if(temp.type==='freezing' && temp.value>-18) anyBad=true;
+  });
+  var uncheckedCount = (d.checks||[]).filter(function(c){ return !c; }).length;
+  var el = document.getElementById('hygStatus');
+  if(anyBad || uncheckedCount>0){
+    el.className = 'hyg-status warn';
+    el.textContent = t('hyg_status_warn');
+  } else {
+    el.className = 'hyg-status ok';
+    el.textContent = t('hyg_status_ok');
+  }
+}
+
+/* ================= REPORTS TAB ================= */
+function renderReports(){
+  var monthSales = getAllSalesThisMonth();
+  var totalSales=0, totalTax=0, totalNet=0;
+  monthSales.forEach(function(entry){
+    var r = calcSale(entry.data);
+    totalSales += r.total; totalTax += r.vatDue; totalNet += r.net;
+  });
+  var wages = getStaffTotal();
+  var expenses = getExpensesTotal();
+  var finalNet = totalNet - wages - expenses;
+
+  document.getElementById('repSales').textContent = fmtMoney(totalSales);
+  document.getElementById('repTax').textContent = fmtMoney(totalTax);
+  document.getElementById('repWages').textContent = fmtMoney(wages);
+  document.getElementById('repExpenses').textContent = fmtMoney(expenses);
+  document.getElementById('repFinal').textContent = fmtMoney(finalNet);
+
+  var box = document.getElementById('repDaysList');
+  if(monthSales.length===0){
+    box.innerHTML = '<p style="font-size:13px; color:var(--text-on-ink-dim);">'+t('rep_days_empty')+'</p>';
+  } else {
+    var html = '';
+    monthSales.forEach(function(entry){
+      var r = calcSale(entry.data);
+      html += '<div class="hist-row"><span>'+entry.date+'</span><span class="val">'+fmtMoney(r.net)+'</span></div>';
+    });
+    box.innerHTML = html;
+  }
+
+  renderWasteCheck(monthSales);
+}
+
+function renderWasteCheck(monthSales){
+  var recipes = lsGet('daftar_recipes', []);
+  var recipeCost = {};
+  recipes.forEach(function(r){
+    var cost = 0;
+    (r.ingredients||[]).forEach(function(ing){ cost += parseFloat(ing.cost)||0; });
+    recipeCost[r.id] = cost;
+  });
+
+  var expected = 0, anyPortions = false, actualPurch = 0;
+  monthSales.forEach(function(entry){
+    actualPurch += parseFloat(entry.data.purch)||0;
+    var portions = entry.data.portions || {};
+    Object.keys(portions).forEach(function(rid){
+      if(recipeCost[rid]!=null){
+        expected += (portions[rid]||0) * recipeCost[rid];
+        if(portions[rid]>0) anyPortions = true;
+      }
+    });
+  });
+
+  var body = document.getElementById('wasteCheckBody');
+  if(recipes.length===0 || !anyPortions){
+    body.innerHTML = '<p style="font-size:13px; color:var(--text-on-ink-dim);">'+t('waste_need_data')+'</p>';
+    return;
+  }
+  var html = '<div class="out-row"><span>'+t('waste_expected')+'</span><span class="val">'+fmtMoney(expected)+'</span></div>'+
+    '<div class="out-row tax"><span>'+t('waste_actual')+'</span><span class="val">'+fmtMoney(actualPurch)+'</span></div>';
+  if(expected>0 && actualPurch > expected*1.3){
+    html += '<div class="alert-item" style="margin-top:10px;">'+t('waste_warn')+'</div>';
+  } else {
+    html += '<div class="alert-item info" style="margin-top:10px;">'+t('waste_ok')+'</div>';
+  }
+  body.innerHTML = html;
+}
+
+/* ================= INVOICE SCAN (sample capability) ================= */
+var SAMPLE_API = null;
+var DOWNLOADS_API = null;
+var DB_API = null;
+var USER_API = null;
+var MY_RESTAURANT_ID = null;
+
+async function initCapabilities(){
+  try{
+    if(window.claude && typeof window.claude.use === 'function'){
+      SAMPLE_API = await window.claude.use('sample');
+      DOWNLOADS_API = await window.claude.use('downloads');
+      DB_API = await window.claude.use('db');
+      USER_API = await window.claude.use('user');
+      if(USER_API){ MY_RESTAURANT_ID = await USER_API.id(); }
+    }
+  }catch(e){ SAMPLE_API = null; DOWNLOADS_API = null; DB_API = null; USER_API = null; MY_RESTAURANT_ID = null; }
+
+  var scanBox = document.getElementById('invoiceScanBox');
+  var advisorBox = document.getElementById('advisorBox');
+  if(SAMPLE_API){
+    advisorBox.style.display = 'block';
+    try{
+      var lim = await SAMPLE_API.limits();
+      if(lim && lim.images){
+        scanBox.style.display = 'block';
+        document.getElementById('invoiceFile').accept = lim.images.mediaTypes.join(',');
+      }
+    }catch(e){ /* keep hidden */ }
+  }
+
+  var exportBox = document.getElementById('exportBox');
+  exportBox.style.display = 'block';
+}
+
+document.getElementById('btnScanInvoice').addEventListener('click', function(){
+  document.getElementById('invoiceFile').click();
+});
+
+document.getElementById('invoiceFile').addEventListener('change', async function(){
+  var file = this.files && this.files[0];
+  if(!file || !SAMPLE_API) return;
+  var statusEl = document.getElementById('scanStatus');
+  statusEl.textContent = t('sales_scan_analyzing');
+  try{
+    var result = await SAMPLE_API.json(
+      'You are looking at a photo of a restaurant purchase invoice or receipt (Lieferantenrechnung/Kassenbon). ' +
+      'Find the TOTAL / GRAND TOTAL amount (Gesamtbetrag / Bruttobetrag, including VAT) as a plain number using a dot as decimal separator, ' +
+      'and the supplier/vendor name printed on it (e.g. Metro, Lidl, Selgros) if visible. ' +
+      'Reply with only a JSON object in the form {"total": number, "supplier": string|null}. If you cannot find a total, reply {"total": null, "supplier": null}.',
+      { images: file, modelTier: 'quick', cache: false }
+    );
+    if(result && typeof result.total === 'number'){
+      document.getElementById('inPurch').value = result.total;
+      updateSaleResult();
+      var supplierTxt = result.supplier ? (' — ' + result.supplier) : '';
+      statusEl.textContent = t('sales_scan_done') + supplierTxt;
+      if(result.supplier){ logSupplierInvoice(result.supplier, result.total); }
+    } else {
+      statusEl.textContent = t('sales_scan_err_generic');
+    }
+  }catch(e){
+    if(e && e.code === 'not_granted'){ statusEl.textContent = t('sales_scan_err_declined'); }
+    else if(e && e.code === 'rate_limited'){ statusEl.textContent = t('sales_scan_err_rate'); }
+    else { statusEl.textContent = t('sales_scan_err_generic'); }
+  }
+  this.value = '';
+});
+
+/* ================= ACCOUNTANT EXPORT (downloads capability) ================= */
+function deNum(n){ return (n||0).toFixed(2).replace('.', ','); }
+
+document.getElementById('btnExportCsv').addEventListener('click', async function(){
+  var statusEl = document.getElementById('exportStatus');
+
+  var monthSales = getAllSalesThisMonth().slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+  var rows = ['Datum;Speisenumsatz;Getraenkeumsatz;Lieferdienst;Kommission;Wareneinkauf;USt.faellig;Netto'];
+  var totalSales=0, totalTax=0, totalNet=0;
+  monthSales.forEach(function(entry){
+    var r = calcSale(entry.data);
+    totalSales += r.total; totalTax += r.vatDue; totalNet += r.net;
+    rows.push([entry.date, deNum(entry.data.food), deNum(entry.data.drink), deNum(entry.data.delivery||0), deNum(r.commissionAmount), deNum(entry.data.purch), deNum(r.vatDue), deNum(r.net)].join(';'));
+  });
+  var wages = getStaffTotal();
+  var expenses = getExpensesTotal();
+  var finalNet = totalNet - wages - expenses;
+  rows.push('');
+  rows.push('Summe Umsatz;;;;;;;'+deNum(totalSales));
+  rows.push('Summe USt.;;;;;;;'+deNum(totalTax));
+  rows.push('Loehne gesamt;;;;;;;'+deNum(wages));
+  rows.push('Fixkosten gesamt;;;;;;;'+deNum(expenses));
+  rows.push('Geschaetzter Reingewinn;;;;;;;'+deNum(finalNet));
+
+  var csv = '\uFEFF' + rows.join('\r\n');
+  var fname = 'gastrobuch-bericht-' + monthPrefix() + '.csv';
+
+  if(DOWNLOADS_API){
+    try{
+      await DOWNLOADS_API.save({ filename: fname, data: csv });
+      statusEl.textContent = t('rep_export_done');
+    }catch(e){
+      statusEl.textContent = t('rep_export_err');
+    }
+  } else {
+    try{
+      var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+      statusEl.textContent = t('rep_export_done');
+    }catch(e){
+      statusEl.textContent = t('rep_export_err');
+    }
+  }
+});
+
+/* ================= BREAK-EVEN ================= */
+function renderBreakeven(){
+  var elFixed = document.getElementById('beFixed');
+  if(!elFixed) return;
+  var fixed = getStaffTotal() + getExpensesTotal();
+  elFixed.textContent = fmtMoney(fixed);
+
+  var monthSales = getAllSalesThisMonth();
+  var actualSales = 0;
+  monthSales.forEach(function(entry){ actualSales += calcSale(entry.data).total; });
+
+  var ratioInput = document.getElementById('beRatio');
+  if(ratioInput.dataset.userSet !== 'true' && monthSales.length>0 && actualSales>0){
+    var totalPurch = 0;
+    monthSales.forEach(function(entry){ totalPurch += parseFloat(entry.data.purch)||0; });
+    var autoRatio = Math.round((totalPurch/actualSales)*100);
+    if(autoRatio>0 && autoRatio<90) ratioInput.value = autoRatio;
+  }
+
+  var ratio = parseFloat(ratioInput.value)||30;
+  var breakevenMonthly = fixed / (1 - (ratio/100));
+  var breakevenDaily = breakevenMonthly/30;
+
+  document.getElementById('beMonthly').textContent = fmtMoney(breakevenMonthly);
+  document.getElementById('beDaily').textContent = fmtMoney(breakevenDaily);
+  document.getElementById('beActual').textContent = fmtMoney(actualSales);
+
+  var diff = actualSales - breakevenMonthly;
+  var banner = document.getElementById('beStatusBanner');
+  var label = document.getElementById('beStatusLabel');
+  var val = document.getElementById('beStatusValue');
+  if(diff >= 0){
+    banner.style.background = 'var(--green-deep)';
+    val.style.color = '#7FE3B4';
+    label.textContent = LANG==='de' ? 'Über dem Break-even um' : 'فوق نقطة التعادل بمقدار';
+  } else {
+    banner.style.background = 'rgba(192,85,74,0.25)';
+    val.style.color = '#ff9a8c';
+    label.textContent = LANG==='de' ? 'Unter dem Break-even um' : 'تحت نقطة التعادل بمقدار';
+  }
+  val.textContent = fmtMoney(Math.abs(diff));
+}
+document.getElementById('beRatio').addEventListener('input', function(){
+  this.dataset.userSet = 'true';
+  renderBreakeven();
+});
+
+/* ================= ACCOUNTANT VIEW (db capability) ================= */
+function renderAccountant(){
+  var code = localStorage.getItem('daftar_office_code') || '';
+  var name = localStorage.getItem('daftar_restaurant_name') || '';
+  document.getElementById('accOfficeCode').value = code;
+  document.getElementById('accRestName').value = name;
+}
+document.getElementById('btnSyncAccountant').addEventListener('click', async function(){
+  var statusEl = document.getElementById('accSyncStatus');
+  var code = document.getElementById('accOfficeCode').value.trim();
+  var name = document.getElementById('accRestName').value.trim();
+  if(!code || !name){
+    statusEl.textContent = LANG==='de' ? 'Bitte Büro-Code und Namen eingeben.' : 'من فضلك اكتب كود المكتب واسم المطعم.';
+    return;
+  }
+  localStorage.setItem('daftar_office_code', code);
+  localStorage.setItem('daftar_restaurant_name', name);
+
+  if(!DB_API || !MY_RESTAURANT_ID){
+    statusEl.textContent = LANG==='de' ? 'Synchronisierung hier nicht verfügbar (Anmeldung erforderlich).' : 'المزامنة مش متاحة هنا دلوقتي (لازم تسجيل دخول).';
+    return;
+  }
+  statusEl.textContent = LANG==='de' ? 'Synchronisiere…' : 'بيزامن…';
+  try{
+    var monthSales = getAllSalesThisMonth();
+    var totalSales=0, totalTax=0, totalNet=0;
+    monthSales.forEach(function(entry){
+      var r = calcSale(entry.data);
+      totalSales += r.total; totalTax += r.vatDue; totalNet += r.net;
+    });
+    var wages = getStaffTotal();
+    var expenses = getExpensesTotal();
+    var finalNet = totalNet - wages - expenses;
+    // كل مطعم بيكتب في مستنده الخاص بس (معرّف بهويته الحقيقية) - مفيش مطعم يقدر يكتب فوق بيانات مطعم تاني
+    await DB_API.collection('restaurants').doc(MY_RESTAURANT_ID).set({
+      officeCode: code,
+      name: name,
+      monthSales: totalSales,
+      monthTax: totalTax,
+      monthWages: wages,
+      monthExpenses: expenses,
+      monthNet: finalNet,
+      currency: cc().currency,
+      updatedAt: new Date().toISOString()
+    });
+    statusEl.textContent = LANG==='de' ? 'Synchronisiert ✓' : 'اتزامن ✓';
+  }catch(e){
+    statusEl.textContent = LANG==='de' ? 'Synchronisierung fehlgeschlagen.' : 'المزامنة فشلت.';
+  }
+});
+document.getElementById('btnLoadAccountant').addEventListener('click', async function(){
+  var listEl = document.getElementById('accClientsList');
+  var code = document.getElementById('accOfficeCode').value.trim();
+  if(!code){
+    listEl.innerHTML = '<p style="font-size:13px; color:var(--text-on-ink-dim);">'+(LANG==='de'?'Büro-Code eingeben.':'اكتب كود المكتب الأول.')+'</p>';
+    return;
+  }
+  if(!DB_API){
+    listEl.innerHTML = '<p style="font-size:13px; color:var(--text-on-ink-dim);">'+(LANG==='de'?'Hier nicht verfügbar.':'مش متاح هنا دلوقتي.')+'</p>';
+    return;
+  }
+  listEl.innerHTML = '<p style="font-size:13px; color:var(--text-on-ink-dim);">'+(LANG==='de'?'Lädt…':'بيحمّل…')+'</p>';
+  try{
+    // القراءة مفتوحة لأي حد عنده الكود (عشان المحاسب يقدر يشوف عملاءه)، لكن الكتابة مقصورة على صاحب كل مستند بس
+    var snap = await DB_API.collection('restaurants').where('officeCode','==',code).get();
+    if(snap.empty){
+      listEl.innerHTML = '<p style="font-size:13px; color:var(--text-on-ink-dim);">'+(LANG==='de'?'Noch keine Restaurants.':'لسه مفيش مطاعم متزامنة.')+'</p>';
+      return;
+    }
+    var html = '';
+    snap.docs.forEach(function(doc){
+      var d = doc.data();
+      html += '<div class="hist-row"><span>'+(d.name||'—')+'</span><span class="val">'+fmtMoney(d.monthNet||0)+'</span></div>';
+    });
+    listEl.innerHTML = html;
+  }catch(e){
+    listEl.innerHTML = '<p style="font-size:13px; color:var(--text-on-ink-dim);">'+(LANG==='de'?'Laden fehlgeschlagen.':'التحميل فشل.')+'</p>';
+  }
+});
+
+document.getElementById('btnAskAdvisor').addEventListener('click', async function(){
+  if(!SAMPLE_API) return;
+  var btn = this;
+  var answerEl = document.getElementById('advisorAnswer');
+  btn.disabled = true;
+  answerEl.textContent = t('adv_thinking');
+
+  var monthSales = getAllSalesThisMonth();
+  var totalSales=0, totalTax=0, totalNet=0;
+  monthSales.forEach(function(entry){
+    var r = calcSale(entry.data);
+    totalSales += r.total; totalTax += r.vatDue; totalNet += r.net;
+  });
+  var wages = getStaffTotal();
+  var expenses = getExpensesTotal();
+  var finalNet = totalNet - wages - expenses;
+  var inv = lsGet('daftar_inventory', []);
+  var lowStock = inv.filter(function(it){ return (parseFloat(it.remaining)||0) <= (parseFloat(it.needed)||0)*0.15 && (parseFloat(it.needed)||0)>0; }).map(function(it){ return it.name; });
+  var currency = cc().currency;
+
+  var lang = LANG==='de' ? 'German' : 'Egyptian Arabic (colloquial, friendly)';
+  var prompt = 'You are a helpful restaurant business advisor. Reply in '+lang+', maximum 5 short lines, no headers, practical and specific. Numbers below are in '+currency+'.\n\n'+
+    'Days recorded this month: '+monthSales.length+'\n'+
+    'Total sales: '+totalSales.toFixed(2)+'\n'+
+    'VAT due: '+totalTax.toFixed(2)+'\n'+
+    'Staff wages: '+wages.toFixed(2)+'\n'+
+    'Fixed expenses: '+expenses.toFixed(2)+'\n'+
+    'Estimated net profit: '+finalNet.toFixed(2)+'\n'+
+    'Low-stock ingredients: '+(lowStock.length ? lowStock.join(', ') : 'none')+'\n\n'+
+    'Give a short, encouraging but honest assessment and 1-2 concrete suggestions.';
+
+  try{
+    var result = await SAMPLE_API(prompt, {
+      modelTier: 'quick',
+      onText: function(u){ answerEl.textContent = u.text; }
+    });
+    answerEl.textContent = result.text;
+  }catch(e){
+    answerEl.textContent = t('adv_err');
+  }
+  btn.disabled = false;
+});
+
+/* ================= RECIPE COSTING ================= */
+function getRecipes(){ return lsGet('daftar_recipes', null); }
+function seedRecipesIfEmpty(){
+  if(getRecipes()===null){
+    lsSet('daftar_recipes', [
+      {
+        id:uid(), name: (LANG==='de'?'Pizza Margherita':'بيتزا مارجريتا'), price:9.50,
+        ingredients:[
+          {id:uid(), name:(LANG==='de'?'Mehl':'دقيق'), cost:0.10},
+          {id:uid(), name:(LANG==='de'?'Käse':'جبنة'), cost:0.90},
+          {id:uid(), name:(LANG==='de'?'Tomatensauce':'صلصة طماطم'), cost:0.30}
+        ]
+      }
+    ]);
+  }
+}
+function saveRecipes(recipes){ lsSet('daftar_recipes', recipes); }
+
+function renderRecipes(){
+  seedRecipesIfEmpty();
+  var recipes = lsGet('daftar_recipes', []);
+  var listEl = document.getElementById('recipesList');
+  var html = '';
+  recipes.forEach(function(rec){
+    var costTotal = 0;
+    (rec.ingredients||[]).forEach(function(ing){ costTotal += parseFloat(ing.cost)||0; });
+    var price = parseFloat(rec.price)||0;
+    var marginEur = price - costTotal;
+    var marginPct = price>0 ? (marginEur/price*100) : 0;
+    var marginCls = marginPct < 60 ? 'margin-bad' : 'margin-good';
+
+    var commission = rec.deliveryCommission!=null ? rec.deliveryCommission : 30;
+    var deliveryNet = price * (1-commission/100);
+    var deliveryMarginEur = deliveryNet - costTotal;
+    var deliveryMarginPct = price>0 ? (deliveryMarginEur/price*100) : 0;
+    var deliveryCls = deliveryMarginEur <= 0 ? 'margin-bad' : (deliveryMarginPct<40 ? 'margin-bad' : 'margin-good');
+
+    html += '<div class="recipe-card" data-rec-id="'+rec.id+'">'+
+      '<div class="recipe-head">'+
+        '<input type="text" class="plain rec-name" value="'+(rec.name||'')+'" placeholder="'+t('rec_name_ph')+'">'+
+        '<div class="input-row"><span class="unit">€</span><input type="number" class="rec-price" value="'+price+'" step="0.1"></div>'+
+        '<button class="remove-btn" onclick="removeRecipe(\''+rec.id+'\')">✕</button>'+
+      '</div>'+
+      '<div class="ing-list">';
+
+    (rec.ingredients||[]).forEach(function(ing){
+      html += '<div class="ing-row" data-ing-id="'+ing.id+'">'+
+        '<input type="text" class="plain ing-name" value="'+(ing.name||'')+'" placeholder="'+t('rec_ing_name_ph')+'">'+
+        '<div class="input-row"><span class="unit">€</span><input type="number" class="ing-cost" value="'+ing.cost+'" step="0.01"></div>'+
+        '<button class="remove-btn" onclick="removeIngredient(\''+rec.id+'\',\''+ing.id+'\')">✕</button>'+
+      '</div>';
+    });
+
+    html += '</div>'+
+      '<button class="btn-dashed" onclick="addIngredient(\''+rec.id+'\')" style="margin-top:4px;">'+t('rec_add_ing')+'</button>'+
+      '<div class="recipe-summary">'+
+        '<span>'+t('rec_cost_total')+': <b>'+fmtMoney(costTotal)+'</b></span>'+
+        '<span>'+t('rec_margin_eur')+': <b>'+fmtMoney(marginEur)+'</b></span>'+
+        '<span>'+t('rec_margin_pct')+': <b class="'+marginCls+'">'+marginPct.toFixed(0)+'%</b></span>'+
+      '</div>'+
+      '<div class="recipe-summary" style="margin-top:0; border-top:none; padding-top:0;">'+
+        '<span>'+t('rec_delivery_commission')+': <div class="input-row" style="display:inline-flex; width:70px; margin-inline-start:6px;"><input type="number" class="rec-commission" value="'+commission+'" min="0" max="90" step="1"><span class="unit">%</span></div></span>'+
+        '<span>'+t('rec_delivery_margin')+': <b class="'+deliveryCls+'">'+fmtMoney(deliveryMarginEur)+' ('+deliveryMarginPct.toFixed(0)+'%)</b></span>'+
+      '</div>'+
+      (deliveryMarginEur<=0 ? ('<div class="alert-item" style="margin-top:8px;">'+t('rec_delivery_warn')+'</div>') : '')+
+    '</div>';
+  });
+  listEl.innerHTML = html;
+
+  listEl.querySelectorAll('.recipe-card').forEach(function(card){
+    var rid = card.getAttribute('data-rec-id');
+    card.querySelector('.rec-name').addEventListener('input', function(){ updateRecipeField(rid,'name',this.value); });
+    card.querySelector('.rec-price').addEventListener('input', function(){ updateRecipeField(rid,'price',parseFloat(this.value)||0); });
+    card.querySelector('.rec-commission').addEventListener('input', function(){ updateRecipeField(rid,'deliveryCommission',parseFloat(this.value)||0); });
+    card.querySelectorAll('.ing-row').forEach(function(row){
+      var iid = row.getAttribute('data-ing-id');
+      row.querySelector('.ing-name').addEventListener('input', function(){ updateIngredientField(rid,iid,'name',this.value); });
+      row.querySelector('.ing-cost').addEventListener('input', function(){ updateIngredientField(rid,iid,'cost',parseFloat(this.value)||0); });
+    });
+  });
+}
+function updateRecipeField(rid, field, value){
+  var recipes = lsGet('daftar_recipes', []);
+  recipes.forEach(function(r){ if(r.id===rid) r[field]=value; });
+  saveRecipes(recipes);
+  renderRecipes();
+}
+function updateIngredientField(rid, iid, field, value){
+  var recipes = lsGet('daftar_recipes', []);
+  recipes.forEach(function(r){
+    if(r.id===rid){ (r.ingredients||[]).forEach(function(ing){ if(ing.id===iid) ing[field]=value; }); }
+  });
+  saveRecipes(recipes);
+  renderRecipes();
+}
+function removeRecipe(rid){
+  var recipes = lsGet('daftar_recipes', []);
+  var removed = recipes.find(function(r){ return r.id===rid; });
+  recipes = recipes.filter(function(r){ return r.id!==rid; });
+  saveRecipes(recipes);
+  logAudit('Rezept entfernt', removed ? removed.name : rid);
+  renderRecipes();
+}
+function removeIngredient(rid, iid){
+  var recipes = lsGet('daftar_recipes', []);
+  recipes.forEach(function(r){
+    if(r.id===rid){ r.ingredients = (r.ingredients||[]).filter(function(ing){ return ing.id!==iid; }); }
+  });
+  saveRecipes(recipes);
+  renderRecipes();
+}
+function addIngredient(rid){
+  var recipes = lsGet('daftar_recipes', []);
+  recipes.forEach(function(r){
+    if(r.id===rid){ (r.ingredients = r.ingredients||[]).push({id:uid(), name:'', cost:0}); }
+  });
+  saveRecipes(recipes);
+  renderRecipes();
+}
+document.getElementById('btnAddRecipe').addEventListener('click', function(){
+  var recipes = lsGet('daftar_recipes', []);
+  recipes.push({id:uid(), name:'', price:0, ingredients:[]});
+  saveRecipes(recipes);
+  logAudit('Rezept hinzugefügt', '');
+  renderRecipes();
+});
+
+/* ================= GOALS ================= */
+function renderGoals(){
+  var goals = lsGet('daftar_goals', {sales:0, laborPct:30, net:0});
+  document.getElementById('goalSales').value = goals.sales || '';
+  document.getElementById('goalLaborPct').value = goals.laborPct || '';
+  document.getElementById('goalNet').value = goals.net || '';
+
+  var monthSales = getAllSalesThisMonth();
+  var totalSales=0, totalNet=0;
+  monthSales.forEach(function(entry){
+    var r = calcSale(entry.data);
+    totalSales += r.total; totalNet += r.net;
+  });
+  var wages = getStaffTotal();
+  var expenses = getExpensesTotal();
+  var finalNet = totalNet - wages - expenses;
+  var laborPct = totalSales>0 ? (wages/totalSales*100) : 0;
+
+  var box = document.getElementById('goalsProgressCard');
+  var rows = '';
+  if(goals.sales>0){
+    var pct = Math.min(100, Math.round(totalSales/goals.sales*100));
+    rows += '<div class="out-row"><span>'+t('goals_progress_sales')+' ('+pct+'%)</span><span class="val">'+fmtMoney(totalSales)+' / '+fmtMoney(goals.sales)+'</span></div>';
+  }
+  if(goals.laborPct>0){
+    var ok = laborPct <= goals.laborPct;
+    rows += '<div class="out-row'+(ok?'':' tax')+'"><span>'+t('goals_progress_labor')+'</span><span class="val">'+laborPct.toFixed(0)+'% / '+goals.laborPct+'%</span></div>';
+  }
+  if(goals.net>0){
+    var pctN = Math.min(100, Math.round(finalNet/goals.net*100));
+    rows += '<div class="out-row net"><span>'+t('goals_progress_net')+' ('+pctN+'%)</span><span class="val">'+fmtMoney(finalNet)+' / '+fmtMoney(goals.net)+'</span></div>';
+  }
+  box.innerHTML = rows || ('<p style="font-size:13px; color:var(--text-on-ink-dim);">'+t('goals_no_target')+'</p>');
+}
+['goalSales','goalLaborPct','goalNet'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', function(){
+    lsSet('daftar_goals', {
+      sales: parseFloat(document.getElementById('goalSales').value)||0,
+      laborPct: parseFloat(document.getElementById('goalLaborPct').value)||0,
+      net: parseFloat(document.getElementById('goalNet').value)||0
+    });
+    renderGoals();
+  });
+});
+
+/* ================= SUPPLIERS ================= */
+function logSupplierInvoice(supplier, amount){
+  if(!supplier) return;
+  var log = lsGet('daftar_supplier_log', []);
+  log.push({date: todayKey(), supplier: supplier, amount: amount});
+  lsSet('daftar_supplier_log', log);
+}
+function renderSuppliers(){
+  var log = lsGet('daftar_supplier_log', []);
+  var listEl = document.getElementById('suppliersList');
+  if(log.length===0){
+    listEl.innerHTML = '<p style="font-size:13px; color:var(--text-on-ink-dim);">'+t('sup_empty')+'</p>';
+    return;
+  }
+  var grouped = {};
+  log.forEach(function(entry){
+    var key = entry.supplier;
+    if(!grouped[key]) grouped[key] = {count:0, total:0, last:0, lastDate:''};
+    grouped[key].count++;
+    grouped[key].total += parseFloat(entry.amount)||0;
+    if(entry.date >= grouped[key].lastDate){ grouped[key].lastDate = entry.date; grouped[key].last = entry.amount; }
+  });
+  var html = '';
+  Object.keys(grouped).forEach(function(name){
+    var g = grouped[name];
+    html += '<div class="card">'+
+      '<h3 style="color:var(--text-on-ink); font-size:15px; font-weight:600;">'+name+'</h3>'+
+      '<div class="out-row"><span>'+t('sup_invoices')+'</span><span class="val">'+g.count+'</span></div>'+
+      '<div class="out-row"><span>'+t('sup_total')+'</span><span class="val">'+fmtMoney(g.total)+'</span></div>'+
+      '<div class="out-row"><span>'+t('sup_last')+'</span><span class="val">'+fmtMoney(g.last)+'</span></div>'+
+    '</div>';
+  });
+  listEl.innerHTML = html;
+}
+
+/* ================= SCENARIO LAB ================= */
+function computeCurrentMonthNet(){
+  var monthSales = getAllSalesThisMonth();
+  var totalNet=0, totalSales=0;
+  monthSales.forEach(function(entry){
+    var r = calcSale(entry.data);
+    totalNet += r.net; totalSales += r.total;
+  });
+  return {net: totalNet - getStaffTotal() - getExpensesTotal(), sales: totalSales, days: monthSales.length};
+}
+function renderScenario(){
+  var base = computeCurrentMonthNet();
+  document.getElementById('scnCurrentNet').textContent = fmtMoney(base.net);
+  runScenario();
+}
+function runScenario(){
+  var base = computeCurrentMonthNet();
+  var priceChangePct = parseFloat(document.getElementById('scnPriceChange').value)||0;
+  var newStaffHours = parseFloat(document.getElementById('scnNewStaffHours').value)||0;
+  var newStaffRate = parseFloat(document.getElementById('scnNewStaffRate').value)||0;
+  var closedDays = parseFloat(document.getElementById('scnClosedDays').value)||0;
+
+  var adjustedSales = base.sales * (1 + priceChangePct/100);
+  adjustedSales = adjustedSales * Math.max(0, (30-closedDays)/30);
+  // نفس هامش الصافي الحالي بالنسبة للمبيعات، مطبق على المبيعات المعدّلة
+  var marginRatio = base.sales>0 ? ((base.net + getStaffTotal() + getExpensesTotal()) / base.sales) : 0;
+  var scenarioGrossNet = adjustedSales * marginRatio;
+  var scenarioNet = scenarioGrossNet - getStaffTotal() - (newStaffHours*newStaffRate) - getExpensesTotal();
+
+  document.getElementById('scnScenarioNet').textContent = fmtMoney(scenarioNet);
+  var diff = scenarioNet - base.net;
+  var banner = document.getElementById('scnDiffBanner');
+  var label = document.getElementById('scnDiffLabel');
+  var val = document.getElementById('scnDiffVal');
+  if(diff>=0){
+    banner.style.background = 'var(--green-deep)'; val.style.color = '#7FE3B4';
+    label.textContent = t('scn_diff_more');
+  } else {
+    banner.style.background = 'rgba(192,85,74,0.25)'; val.style.color = '#ff9a8c';
+    label.textContent = t('scn_diff_less');
+  }
+  val.textContent = fmtMoney(Math.abs(diff));
+}
+['scnPriceChange','scnNewStaffHours','scnNewStaffRate','scnClosedDays'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', runScenario);
+});
+
+/* ================= AUDIT LOG ================= */
+function logAudit(action, detail){
+  var log = lsGet('daftar_audit_log', []);
+  log.push({ts: new Date().toISOString(), action: action, detail: detail});
+  if(log.length > 300) log = log.slice(log.length-300);
+  lsSet('daftar_audit_log', log);
+}
+function renderAuditLog(){
+  var log = lsGet('daftar_audit_log', []).slice().reverse();
+  var box = document.getElementById('auditLogList');
+  if(log.length===0){
+    box.innerHTML = '<p style="font-size:13px; color:var(--text-on-ink-dim);">'+t('audit_empty')+'</p>';
+    return;
+  }
+  var html = '';
+  log.slice(0,150).forEach(function(e){
+    var d = new Date(e.ts);
+    var dateStr = d.toLocaleString('de-DE', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+    html += '<div class="hist-row"><span>'+dateStr+' — '+e.action+'</span><span class="val" style="font-family:inherit; font-size:12px;">'+(e.detail||'')+'</span></div>';
+  });
+  box.innerHTML = html;
+}
+
+/* ================= INIT ================= */
+seedStaffIfEmpty();
+seedInvIfEmpty();
+seedExpIfEmpty();
+seedHygieneIfEmpty();
+applyLang();
+showTab('dashboard');
+initCapabilities();
+</script>
+
+</body>
+</html>
