@@ -9,7 +9,7 @@ import { signIn, signUp, type AuthActionState } from "./actions";
 const initialState: AuthActionState = {};
 
 export default function LoginPage() {
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const action = mode === "signin" ? signIn : signUp;
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -87,10 +87,10 @@ export default function LoginPage() {
 
       <div className="flex justify-center gap-4 text-xs text-text-on-ink-dim">
         <Link href="/privacy" className="flex min-h-11 items-center underline">
-          {locale === "ar" ? "الخصوصية" : "Datenschutz"}
+          {t("footer_privacy")}
         </Link>
         <Link href="/terms" className="flex min-h-11 items-center underline">
-          {locale === "ar" ? "الشروط" : "AGB"}
+          {t("footer_terms")}
         </Link>
       </div>
     </main>

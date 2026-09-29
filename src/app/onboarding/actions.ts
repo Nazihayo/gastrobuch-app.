@@ -1,7 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { RESTAURANT_COOKIE } from "@/lib/restaurant";
 
 export type OnboardingActionState = {
   error?: string;
@@ -27,7 +29,7 @@ export async function createRestaurant(
     return { error: "onboarding_error" };
   }
 
-  const { error } = await supabase.rpc("create_restaurant_with_owner", {
+  const { data, error } = await supabase.rpc("create_restaurant_with_owner", {
     restaurant_name: name,
     restaurant_country: country,
     restaurant_language: language,
@@ -36,6 +38,16 @@ export async function createRestaurant(
   if (error) {
     return { error: error.message };
   }
+
+  // Make the newly created restaurant the active one — matters once a user
+  // has more than one, since getCurrentRestaurant() otherwise defaults to
+  // whichever restaurant they joined first.
+  const cookieStore = await cookies();
+  cookieStore.set(RESTAURANT_COOKIE, data.id, {
+    path: "/",
+    maxAge: 31536000,
+    sameSite: "lax",
+  });
 
   redirect("/");
 }

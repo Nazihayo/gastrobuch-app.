@@ -4,10 +4,11 @@ import { getLocale } from "@/lib/i18n/server";
 import { dictionaries } from "@/lib/i18n/dictionaries";
 import LanguageToggle from "@/components/LanguageToggle";
 import BottomNav from "@/components/BottomNav";
+import RestaurantSwitcher from "@/components/RestaurantSwitcher";
 import { signOut } from "@/app/actions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [{ restaurant, role }, locale] = await Promise.all([
+  const [{ restaurant, role, allRestaurants }, locale] = await Promise.all([
     getCurrentRestaurant(),
     getLocale(),
   ]);
@@ -20,7 +21,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-divider bg-ink px-4 py-4">
-        <span className="font-display text-xl font-bold">{restaurant.name}</span>
+        <RestaurantSwitcher
+          currentId={restaurant.id}
+          currentName={restaurant.name}
+          restaurants={allRestaurants}
+        />
         <div className="flex items-center gap-3">
           <LanguageToggle />
           <form action={signOut}>

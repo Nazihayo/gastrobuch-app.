@@ -1,4 +1,4 @@
-export type CountryCode = "de" | "sa" | "ae";
+export type CountryCode = "de" | "sa" | "ae" | "uk";
 
 type CountryConfig = {
   flag: string;
@@ -12,7 +12,7 @@ type CountryConfig = {
   vatRate?: number;
   minijob: number | null;
   minWage: number | null;
-  hygieneLaw: { de: string; ar: string };
+  hygieneLaw: { de: string; ar: string; en: string };
 };
 
 // Tax/currency rules per country. Deliberately app code, not a DB table —
@@ -30,7 +30,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     vatDrink: 19,
     minijob: 603,
     minWage: 13.9,
-    hygieneLaw: { de: "LMHV / EU 852/2004", ar: "LMHV / لائحة الاتحاد الأوروبي 852/2004" },
+    hygieneLaw: {
+      de: "LMHV / EU 852/2004",
+      ar: "LMHV / لائحة الاتحاد الأوروبي 852/2004",
+      en: "LMHV / EU 852/2004",
+    },
   },
   sa: {
     flag: "🇸🇦",
@@ -42,7 +46,11 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     vatRate: 15,
     minijob: null,
     minWage: null,
-    hygieneLaw: { de: "SFDA (Saudi Food & Drug Authority)", ar: "الهيئة العامة للغذاء والدواء (SFDA)" },
+    hygieneLaw: {
+      de: "SFDA (Saudi Food & Drug Authority)",
+      ar: "الهيئة العامة للغذاء والدواء (SFDA)",
+      en: "SFDA (Saudi Food & Drug Authority)",
+    },
   },
   ae: {
     flag: "🇦🇪",
@@ -54,7 +62,27 @@ export const COUNTRIES: Record<CountryCode, CountryConfig> = {
     vatRate: 5,
     minijob: null,
     minWage: null,
-    hygieneLaw: { de: "ADAFSA / Dubai Municipality", ar: "ADAFSA / بلدية دبي" },
+    hygieneLaw: {
+      de: "ADAFSA / Dubai Municipality",
+      ar: "ADAFSA / بلدية دبي",
+      en: "ADAFSA / Dubai Municipality",
+    },
+  },
+  uk: {
+    flag: "🇬🇧",
+    code: "GB",
+    currency: "£",
+    currencyPos: "before",
+    locale: "en-GB",
+    vatMode: "flat",
+    vatRate: 20,
+    minijob: null,
+    minWage: 12.71,
+    hygieneLaw: {
+      de: "Food Safety Act 1990 / FSA Food Hygiene Rating Scheme",
+      ar: "قانون سلامة الغذاء 1990 / نظام تقييم الهايجين FSA",
+      en: "Food Safety Act 1990 / FSA Food Hygiene Rating Scheme",
+    },
   },
 };
 

@@ -64,6 +64,34 @@ export const privacyContent: Record<Locale, LegalPage> = {
       },
     ],
   },
+  en: {
+    title: "Privacy",
+    updated: "Last updated: 2026",
+    intro:
+      "Gastrobuch is an internal restaurant-bookkeeping tool. This page describes exactly what data is stored and how — no marketing language.",
+    sections: [
+      {
+        heading: "What data is stored",
+        body: "Account email, restaurant name, country and language, daily sales and purchases, staff (name, hours, hourly rate), inventory items, recurring fixed costs, recipe costs, customer data (name, phone, address) for phone/delivery orders, HACCP temperature logs and checklists, and monthly goals.",
+      },
+      {
+        heading: "Where the data lives",
+        body: "All data lives in the Supabase database (PostgreSQL) set up for this project. Access is strictly limited via Row Level Security to users associated with that specific restaurant — no other user can see this data.",
+      },
+      {
+        heading: "Sharing with third parties",
+        body: "There is no sharing with third parties, no advertising, and no tracking. No analytics or marketing cookies are set — only one technical cookie for language preference and the session cookies Supabase sets for sign-in.",
+      },
+      {
+        heading: "Responsibility",
+        body: "This is a self-run tool, not the product of a registered company. Lawful processing of customer and staff data under your jurisdiction (e.g. GDPR) is your own responsibility as the restaurant's operator.",
+      },
+      {
+        heading: "Contact",
+        body: "Questions about your data go to the email address you signed up with.",
+      },
+    ],
+  },
 };
 
 export const termsContent: Record<Locale, LegalPage> = {
@@ -111,6 +139,29 @@ export const termsContent: Record<Locale, LegalPage> = {
       {
         heading: "إلغاء الحساب",
         body: "تقدر تطلب حذف حسابك في أي وقت برسالة بسيطة لإيميل المسؤول عن التطبيق.",
+      },
+    ],
+  },
+  en: {
+    title: "Terms of use",
+    updated: "Last updated: 2026",
+    intro: "By using Gastrobuch you accept the following points.",
+    sections: [
+      {
+        heading: "Not tax or legal advice",
+        body: "All calculations (VAT, labor cost, break-even, profit) are automatic estimates for guidance only. They do not replace a tax return or advice from an accountant, payroll office, or food-hygiene professional.",
+      },
+      {
+        heading: "No warranty",
+        body: "This tool is provided with no guarantee of uptime or being error-free. Keep important figures recorded elsewhere too until you've built trust in its reliability.",
+      },
+      {
+        heading: "Your responsibility",
+        body: "You're responsible for the accuracy of the data you enter and for complying with all legal obligations of your restaurant (tax, labor law, food safety, and privacy toward your customers and staff).",
+      },
+      {
+        heading: "Closing your account",
+        body: "You can ask to have your account deleted at any time with a simple message to the operator's email address.",
       },
     ],
   },

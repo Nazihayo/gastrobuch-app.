@@ -2,6 +2,7 @@ import { getCurrentRestaurant } from "@/lib/restaurant";
 import { getLocale } from "@/lib/i18n/server";
 import { dictionaries } from "@/lib/i18n/dictionaries";
 import LanguageToggle from "@/components/LanguageToggle";
+import RestaurantSwitcher from "@/components/RestaurantSwitcher";
 import { signOut } from "@/app/actions";
 
 export default async function AccountantLayout({
@@ -9,7 +10,7 @@ export default async function AccountantLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [{ restaurant }, locale] = await Promise.all([
+  const [{ restaurant, allRestaurants }, locale] = await Promise.all([
     getCurrentRestaurant(),
     getLocale(),
   ]);
@@ -19,7 +20,11 @@ export default async function AccountantLayout({
     <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-divider bg-ink px-4 py-4">
         <div>
-          <span className="font-display text-xl font-bold">{restaurant.name}</span>
+          <RestaurantSwitcher
+            currentId={restaurant.id}
+            currentName={restaurant.name}
+            restaurants={allRestaurants}
+          />
           <p className="text-xs text-text-on-ink-dim">{t.team_role_accountant}</p>
         </div>
         <div className="flex items-center gap-3">

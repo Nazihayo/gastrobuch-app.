@@ -18,7 +18,6 @@ function rateText(country: CountryCode): string {
 
 export default function SalesForm({
   country,
-  locale,
   today,
   todayEntry,
   history,
@@ -26,7 +25,6 @@ export default function SalesForm({
   todayPortions,
 }: {
   country: CountryCode;
-  locale: "de" | "ar";
   today: string;
   todayEntry: SalesDayRow | null;
   history: SalesDayRow[];
@@ -64,10 +62,7 @@ export default function SalesForm({
     [food, drink, delivery, commissionPct, purchases, country]
   );
 
-  const leadTxt =
-    locale === "de"
-      ? `Trage die heutigen Zahlen ein — die Schätzung berechnet sich sofort (USt. ${rateText(country)}).`
-      : `سجّل أرقام اليوم - التقدير بيتحسب فوراً (ضريبة ${rateText(country)}).`;
+  const leadTxt = t("sales_lead").replace("{vat}", rateText(country));
 
   return (
     <div className="flex flex-col gap-6">

@@ -22,6 +22,12 @@ function dirFor(locale: Locale): "ltr" | "rtl" {
   return locale === "ar" ? "rtl" : "ltr";
 }
 
+export const LOCALE_NAMES: Record<Locale, string> = {
+  de: "Deutsch",
+  en: "English",
+  ar: "العربية",
+};
+
 export function LanguageProvider({
   initialLocale = DEFAULT_LOCALE,
   children,

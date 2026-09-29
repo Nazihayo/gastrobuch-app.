@@ -48,6 +48,7 @@ export default function OnboardingForm() {
             className="min-h-11 rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
           >
             <option value="de">{t("country_de")}</option>
+            <option value="uk">{t("country_uk")}</option>
             <option value="sa">{t("country_sa")}</option>
             <option value="ae">{t("country_ae")}</option>
           </select>

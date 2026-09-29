@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentRestaurant } from "@/lib/restaurant";
-import { getLocale } from "@/lib/i18n/server";
 import SalesForm from "./SalesForm";
 
 export type SalesDayRow = {
@@ -19,10 +18,7 @@ function todayKey(): string {
 }
 
 export default async function SalesPage() {
-  const [{ restaurant }, locale] = await Promise.all([
-    getCurrentRestaurant(),
-    getLocale(),
-  ]);
+  const { restaurant } = await getCurrentRestaurant();
   const supabase = await createClient();
 
   const today = todayKey();
@@ -53,7 +49,6 @@ export default async function SalesPage() {
   return (
     <SalesForm
       country={restaurant.country}
-      locale={locale}
       today={today}
       todayEntry={todayEntry}
       history={history ?? []}
