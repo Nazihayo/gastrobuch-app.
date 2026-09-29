@@ -107,7 +107,7 @@ export default function ReportView({
         <button
           type="button"
           onClick={handleExport}
-          className="rounded-lg bg-brand-green-bright px-4 py-3 text-sm font-bold text-[#0A1F16]"
+          className="min-h-11 rounded-lg bg-brand-green-bright px-4 py-3 text-sm font-bold text-[#0A1F16]"
         >
           {t.rep_export_btn}
         </button>

@@ -33,7 +33,7 @@ export default function OnboardingForm() {
             type="text"
             required
             maxLength={80}
-            className="rounded-lg border border-divider bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+            className="min-h-11 rounded-lg border border-divider bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
           />
         </div>
 
@@ -45,7 +45,7 @@ export default function OnboardingForm() {
             id="country"
             name="country"
             defaultValue="de"
-            className="rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+            className="min-h-11 rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
           >
             <option value="de">{t("country_de")}</option>
             <option value="sa">{t("country_sa")}</option>
@@ -58,7 +58,7 @@ export default function OnboardingForm() {
         <button
           type="submit"
           disabled={pending}
-          className="mt-2 rounded-lg bg-brand-green-bright px-4 py-2 text-sm font-semibold text-[#0A1F16] disabled:opacity-50"
+          className="mt-2 min-h-11 rounded-lg bg-brand-green-bright px-4 py-2 text-sm font-semibold text-[#0A1F16] disabled:opacity-50"
         >
           {t("onboarding_submit")}
         </button>

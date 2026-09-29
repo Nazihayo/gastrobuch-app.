@@ -107,7 +107,7 @@ export default function HygieneView({
                       patchTempLocal(temp.id, { type });
                       commitTemp(temp.id, { type });
                     }}
-                    className="rounded border border-divider bg-ink-soft px-2 py-1 text-xs text-text-on-ink-dim"
+                    className="min-h-11 rounded border border-divider bg-ink-soft px-2 py-1 text-xs text-text-on-ink-dim"
                   >
                     <option value="cooling">{t("hyg_cooling")}</option>
                     <option value="freezing">{t("hyg_freezing")}</option>
@@ -116,12 +116,12 @@ export default function HygieneView({
                     type="button"
                     onClick={() => handleRemoveTemp(temp.id)}
                     aria-label="remove"
-                    className="px-1 text-text-on-ink-dim hover:text-brand-red"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center text-text-on-ink-dim hover:text-brand-red"
                   >
                     ✕
                   </button>
                 </div>
-                <div className="rounded-md bg-ink-soft px-2 py-1.5 text-center">
+                <div className="min-h-11 rounded-md bg-ink-soft px-2 py-1.5 text-center">
                   <label className="block text-[9.5px] text-text-on-ink-dim">°C</label>
                   <input
                     type="number"
@@ -143,7 +143,7 @@ export default function HygieneView({
         <button
           type="button"
           onClick={handleAddTemp}
-          className="mt-3 w-full rounded-lg border border-dashed border-divider py-2.5 text-sm text-text-on-ink-dim hover:text-text-on-ink"
+          className="mt-3 min-h-11 w-full rounded-lg border border-dashed border-divider py-2.5 text-sm text-text-on-ink-dim hover:text-text-on-ink"
         >
           {t("hyg_add_temp")}
         </button>

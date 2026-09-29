@@ -21,7 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <form action={signOut}>
             <button
               type="submit"
-              className="rounded-full border border-divider px-4 py-2 text-xs font-semibold text-text-on-ink-dim"
+              className="min-h-11 rounded-full border border-divider px-4 py-2 text-xs font-semibold text-text-on-ink-dim"
             >
               {t.nav_sign_out}
             </button>

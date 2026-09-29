@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import LanguageToggle from "@/components/LanguageToggle";
@@ -8,7 +9,7 @@ import { signIn, signUp, type AuthActionState } from "./actions";
 const initialState: AuthActionState = {};
 
 export default function LoginPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const action = mode === "signin" ? signIn : signUp;
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -42,7 +43,7 @@ export default function LoginPage() {
               name="email"
               type="email"
               required
-              className="rounded-lg border border-divider bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+              className="min-h-11 rounded-lg border border-divider bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -55,7 +56,7 @@ export default function LoginPage() {
               type="password"
               required
               minLength={6}
-              className="rounded-lg border border-divider bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+              className="min-h-11 rounded-lg border border-divider bg-transparent px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
             />
           </div>
 
@@ -69,7 +70,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={pending}
-            className="mt-2 rounded-lg bg-brand-green-bright px-4 py-2 text-sm font-semibold text-[#0A1F16] disabled:opacity-50"
+            className="mt-2 min-h-11 rounded-lg bg-brand-green-bright px-4 py-2 text-sm font-semibold text-[#0A1F16] disabled:opacity-50"
           >
             {mode === "signin" ? t("login_submit") : t("signup_submit")}
           </button>
@@ -79,10 +80,19 @@ export default function LoginPage() {
       <button
         type="button"
         onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-        className="text-center text-sm text-brand-green-bright underline"
+        className="min-h-11 text-center text-sm text-brand-green-bright underline"
       >
         {mode === "signin" ? t("login_switch_to_signup") : t("signup_switch_to_login")}
       </button>
+
+      <div className="flex justify-center gap-4 text-xs text-text-on-ink-dim">
+        <Link href="/privacy" className="flex min-h-11 items-center underline">
+          {locale === "ar" ? "الخصوصية" : "Datenschutz"}
+        </Link>
+        <Link href="/terms" className="flex min-h-11 items-center underline">
+          {locale === "ar" ? "الشروط" : "AGB"}
+        </Link>
+      </div>
     </main>
   );
 }

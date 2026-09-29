@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Aref_Ruqaa, IBM_Plex_Sans_Arabic, IBM_Plex_Mono } from "next/font/google";
 import { getLocale } from "@/lib/i18n/server";
 import { LanguageProvider } from "@/lib/i18n/context";
@@ -25,6 +25,11 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Gastrobuch",
   description: "Restaurant-Buchhaltung: Steuer, Personal, Lager, Hygiene an einem Ort.",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Gastrobuch" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#163f30",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

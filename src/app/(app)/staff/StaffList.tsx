@@ -99,13 +99,13 @@ export default function StaffList({
                   type="button"
                   onClick={() => handleRemove(s)}
                   aria-label="remove"
-                  className="px-1 text-text-on-ink-dim hover:text-brand-red"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center text-text-on-ink-dim hover:text-brand-red"
                 >
                   ✕
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-md bg-ink-soft px-2 py-1.5 text-center">
+                <div className="min-h-11 rounded-md bg-ink-soft px-2 py-1.5 text-center">
                   <label className="block text-[9.5px] text-text-on-ink-dim">
                     {t("staff_hours")}
                   </label>
@@ -121,7 +121,7 @@ export default function StaffList({
                     className="w-full bg-transparent text-center font-num text-sm outline-none"
                   />
                 </div>
-                <div className="rounded-md bg-ink-soft px-2 py-1.5 text-center">
+                <div className="min-h-11 rounded-md bg-ink-soft px-2 py-1.5 text-center">
                   <label className="block text-[9.5px] text-text-on-ink-dim">
                     {conf.currency}
                     {t("staff_rate")}
@@ -148,7 +148,7 @@ export default function StaffList({
       <button
         type="button"
         onClick={handleAdd}
-        className="rounded-lg border border-dashed border-divider py-3 text-sm text-text-on-ink-dim hover:text-text-on-ink"
+        className="min-h-11 rounded-lg border border-dashed border-divider py-3 text-sm text-text-on-ink-dim hover:text-text-on-ink"
       >
         {t("staff_add")}
       </button>

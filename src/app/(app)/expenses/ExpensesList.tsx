@@ -69,7 +69,7 @@ export default function ExpensesList({
                 onBlur={(ev) => commit(e.id, { name: ev.target.value })}
                 className="flex-1 bg-transparent text-sm font-medium outline-none"
               />
-              <div className="flex items-center gap-1 rounded-md border border-divider bg-ink-soft px-2 py-1">
+              <div className="flex min-h-11 items-center gap-1 rounded-md border border-divider bg-ink-soft px-2 py-1">
                 <span className="text-xs text-text-on-ink-dim">
                   {COUNTRIES[country].currency}
                 </span>
@@ -89,7 +89,7 @@ export default function ExpensesList({
                 type="button"
                 onClick={() => handleRemove(e)}
                 aria-label="remove"
-                className="px-1 text-text-on-ink-dim hover:text-brand-red"
+                className="flex h-11 w-11 shrink-0 items-center justify-center text-text-on-ink-dim hover:text-brand-red"
               >
                 ✕
               </button>
@@ -101,7 +101,7 @@ export default function ExpensesList({
       <button
         type="button"
         onClick={handleAdd}
-        className="rounded-lg border border-dashed border-divider py-3 text-sm text-text-on-ink-dim hover:text-text-on-ink"
+        className="min-h-11 rounded-lg border border-dashed border-divider py-3 text-sm text-text-on-ink-dim hover:text-text-on-ink"
       >
         {t("exp_add")}
       </button>

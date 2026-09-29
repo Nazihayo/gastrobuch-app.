@@ -89,7 +89,7 @@ export default function SalesForm({
           <MoneyInput name="delivery" value={delivery} onChange={setDelivery} country={country} />
         </Field>
         <Field label={t("sales_commission")}>
-          <div className="flex items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
+          <div className="flex min-h-11 items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
             <input
               type="number"
               name="commissionPct"
@@ -114,7 +114,7 @@ export default function SalesForm({
             </h3>
             {recipes.map((r) => (
               <Field key={r.id} label={r.name || "—"}>
-                <div className="flex items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
+                <div className="flex min-h-11 items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
                   <input
                     type="number"
                     min={0}
@@ -141,7 +141,7 @@ export default function SalesForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-brand-green-bright px-4 py-3 text-sm font-bold text-[#0A1F16] disabled:opacity-50"
+          className="min-h-11 rounded-lg bg-brand-green-bright px-4 py-3 text-sm font-bold text-[#0A1F16] disabled:opacity-50"
         >
           {pending ? "…" : state.savedAt ? t("sales_saved") : t("sales_save")}
         </button>
@@ -231,7 +231,7 @@ function MoneyInput({
   country: CountryCode;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
+    <div className="flex min-h-11 items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
       <span className="text-xs text-text-on-ink-dim">{COUNTRIES[country].currency}</span>
       <input
         type="number"

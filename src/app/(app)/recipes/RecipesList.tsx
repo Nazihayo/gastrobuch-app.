@@ -133,7 +133,7 @@ export default function RecipesList({
                 onBlur={(e) => commitRecipe(r.id, { name: e.target.value })}
                 className="flex-1 bg-transparent text-base font-semibold outline-none"
               />
-              <div className="flex items-center gap-1 rounded-md border border-divider bg-ink px-2 py-1">
+              <div className="flex min-h-11 items-center gap-1 rounded-md border border-divider bg-ink px-2 py-1">
                 <span className="text-xs text-text-on-ink-dim">
                   {COUNTRIES[country].currency}
                 </span>
@@ -154,7 +154,7 @@ export default function RecipesList({
                 type="button"
                 onClick={() => handleRemoveRecipe(r)}
                 aria-label="remove"
-                className="px-1 text-text-on-ink-dim hover:text-brand-red"
+                className="flex h-11 w-11 shrink-0 items-center justify-center text-text-on-ink-dim hover:text-brand-red"
               >
                 ✕
               </button>
@@ -164,7 +164,7 @@ export default function RecipesList({
               {r.ingredients.map((ing) => (
                 <div
                   key={ing.id}
-                  className="grid grid-cols-[1fr_90px_26px] items-center gap-2 rounded-md border border-divider bg-ink px-2.5 py-2"
+                  className="grid grid-cols-[1fr_90px_44px] items-center gap-2 rounded-md border border-divider bg-ink px-2.5 py-2"
                 >
                   <input
                     type="text"
@@ -199,7 +199,7 @@ export default function RecipesList({
                     type="button"
                     onClick={() => handleRemoveIngredient(r.id, ing.id)}
                     aria-label="remove ingredient"
-                    className="text-text-on-ink-dim hover:text-brand-red"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center text-text-on-ink-dim hover:text-brand-red"
                   >
                     ✕
                   </button>
@@ -277,7 +277,7 @@ export default function RecipesList({
       <button
         type="button"
         onClick={handleAddRecipe}
-        className="rounded-lg border border-dashed border-divider py-3 text-sm text-text-on-ink-dim hover:text-text-on-ink"
+        className="min-h-11 rounded-lg border border-dashed border-divider py-3 text-sm text-text-on-ink-dim hover:text-text-on-ink"
       >
         {t("rec_add")}
       </button>

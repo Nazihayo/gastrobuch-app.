@@ -57,7 +57,7 @@ export default function GoalsForm({
 
       <div className="flex flex-col gap-4 rounded-xl border border-divider bg-ink-soft p-5">
         <Field label={t("goals_target_sales")}>
-          <div className="flex items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
+          <div className="flex min-h-11 items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
             <span className="text-xs text-text-on-ink-dim">{COUNTRIES[country].currency}</span>
             <input
               type="number"
@@ -71,7 +71,7 @@ export default function GoalsForm({
           </div>
         </Field>
         <Field label={t("goals_target_labor")}>
-          <div className="flex items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
+          <div className="flex min-h-11 items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
             <input
               type="number"
               min={0}
@@ -86,7 +86,7 @@ export default function GoalsForm({
           </div>
         </Field>
         <Field label={t("goals_target_net")}>
-          <div className="flex items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
+          <div className="flex min-h-11 items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
             <span className="text-xs text-text-on-ink-dim">{COUNTRIES[country].currency}</span>
             <input
               type="number"

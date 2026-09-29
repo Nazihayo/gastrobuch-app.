@@ -10,7 +10,11 @@
   --green: #1f6b4d;
   --green-bright: #3fae82;
   --green-deep: #163f30;
-  --red: #c0554a;
+  /* Lightened from the original #c0554a: that shade only hit 3.97:1 against
+     --ink, below WCAG AA's 4.5:1 for body text (error messages, financial
+     figures). This tone clears 5.8:1+ against --ink and every tinted chip
+     background already used in the app (verified by contrast calculation). */
+  --red: #e2887d;
   --divider: rgba(237, 233, 223, 0.12);
 }
 

@@ -40,7 +40,7 @@ export default function BreakevenCalc({
         <Row label={t("be_fixed")} value={fmtMoney(fixed, country)} />
         <div className="mt-3 flex flex-col gap-1">
           <label className="text-xs text-text-on-ink-dim">{t("be_ratio_label")}</label>
-          <div className="flex items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
+          <div className="flex min-h-11 items-center gap-2 rounded-lg border border-divider bg-ink px-3 py-1">
             <input
               type="number"
               min={0}

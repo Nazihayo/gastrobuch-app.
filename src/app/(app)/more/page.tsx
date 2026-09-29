@@ -3,6 +3,7 @@ import { getLocale } from "@/lib/i18n/server";
 import { dictionaries } from "@/lib/i18n/dictionaries";
 
 const menuItems = [
+  { href: "/customers", key: "more_customers" as const },
   { href: "/expenses", key: "more_expenses" as const },
   { href: "/breakeven", key: "more_breakeven" as const },
   { href: "/recipes", key: "more_recipes" as const },
@@ -11,6 +12,7 @@ const menuItems = [
   { href: "/scenario", key: "more_scenario" as const },
   { href: "/hygiene", key: "more_hygiene" as const },
   { href: "/reports", key: "more_reports" as const },
+  { href: "/profile", key: "more_profile" as const },
 ];
 
 export default async function MorePage() {
