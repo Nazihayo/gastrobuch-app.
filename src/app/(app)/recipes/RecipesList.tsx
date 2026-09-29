@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { COUNTRIES, fmtMoney, type CountryCode } from "@/lib/countries";
+import { useUndoableRemove } from "@/lib/useUndoableRemove";
+import UndoToast from "@/components/UndoToast";
 import {
   addIngredient,
   addRecipe,
@@ -24,12 +26,15 @@ type RecipeState = {
 export default function RecipesList({
   country,
   initialRecipes,
+  inventoryItems,
 }: {
   country: CountryCode;
   initialRecipes: RecipeState[];
+  inventoryItems: { id: string; name: string; unit: string }[];
 }) {
   const { t } = useLanguage();
   const [recipes, setRecipes] = useState<RecipeState[]>(initialRecipes);
+  const [query, setQuery] = useState("");
   const [, startTransition] = useTransition();
 
   async function handleAddRecipe() {
@@ -37,12 +42,25 @@ export default function RecipesList({
     if (created) setRecipes((prev) => [...prev, { ...created, ingredients: [] }]);
   }
 
-  function handleRemoveRecipe(r: RecipeState) {
-    setRecipes((prev) => prev.filter((x) => x.id !== r.id));
-    startTransition(() => {
-      removeRecipe(r.id, r.name);
-    });
-  }
+  const commitRemoveRecipe = useCallback(
+    (r: RecipeState) => {
+      setRecipes((prev) => prev.filter((x) => x.id !== r.id));
+      startTransition(() => {
+        removeRecipe(r.id, r.name);
+      });
+    },
+    [startTransition]
+  );
+  const { pending, scheduleRemove, undo } = useUndoableRemove(commitRemoveRecipe);
+  const visibleRecipes = useMemo(
+    () => recipes.filter((r) => r.id !== pending?.id),
+    [recipes, pending]
+  );
+  const searchedRecipes = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return visibleRecipes;
+    return visibleRecipes.filter((r) => r.name.toLowerCase().includes(q));
+  }, [visibleRecipes, query]);
 
   function patchRecipeLocal(rid: string, patch: Partial<RecipeState>) {
     setRecipes((prev) => prev.map((r) => (r.id === rid ? { ...r, ...patch } : r)));
@@ -92,7 +110,10 @@ export default function RecipesList({
     );
   }
 
-  function commitIngredient(iid: string, patch: Partial<Pick<Ingredient, "name" | "cost">>) {
+  function commitIngredient(
+    iid: string,
+    patch: Partial<Pick<Ingredient, "name" | "cost" | "inventoryItemId" | "quantityPerPortion">>
+  ) {
     startTransition(() => {
       updateIngredient(iid, patch);
     });
@@ -105,11 +126,23 @@ export default function RecipesList({
         <p className="mt-1 text-sm text-text-on-ink-dim">{t("rec_lead")}</p>
       </div>
 
-      {recipes.length === 0 && (
-        <p className="text-sm text-text-on-ink-dim">{t("rec_empty")}</p>
+      {visibleRecipes.length > 5 && (
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("rec_search_ph")}
+          className="min-h-11 rounded-lg border border-divider bg-ink-soft px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+        />
       )}
 
-      {recipes.map((r) => {
+      {searchedRecipes.length === 0 && (
+        <p className="text-sm text-text-on-ink-dim">
+          {visibleRecipes.length === 0 ? t("rec_empty") : t("cust_no_match")}
+        </p>
+      )}
+
+      {searchedRecipes.map((r) => {
         const costTotal = r.ingredients.reduce((sum, i) => sum + (i.cost || 0), 0);
         const price = r.price || 0;
         const marginEur = price - costTotal;
@@ -131,7 +164,7 @@ export default function RecipesList({
                 placeholder={t("rec_name_ph")}
                 onChange={(e) => patchRecipeLocal(r.id, { name: e.target.value })}
                 onBlur={(e) => commitRecipe(r.id, { name: e.target.value })}
-                className="flex-1 bg-transparent text-base font-semibold outline-none"
+                className="w-0 min-w-0 flex-1 bg-transparent text-base font-semibold outline-none"
               />
               <div className="flex min-h-11 items-center gap-1 rounded-md border border-divider bg-ink px-2 py-1">
                 <span className="text-xs text-text-on-ink-dim">
@@ -152,7 +185,7 @@ export default function RecipesList({
               </div>
               <button
                 type="button"
-                onClick={() => handleRemoveRecipe(r)}
+                onClick={() => scheduleRemove(r)}
                 aria-label="remove"
                 className="flex h-11 w-11 shrink-0 items-center justify-center text-text-on-ink-dim hover:text-brand-red"
               >
@@ -164,7 +197,7 @@ export default function RecipesList({
               {r.ingredients.map((ing) => (
                 <div
                   key={ing.id}
-                  className="grid grid-cols-[1fr_90px_44px] items-center gap-2 rounded-md border border-divider bg-ink px-2.5 py-2"
+                  className="grid grid-cols-[minmax(0,1fr)_90px_44px] items-center gap-2 rounded-md border border-divider bg-ink px-2.5 py-2"
                 >
                   <input
                     type="text"
@@ -203,6 +236,51 @@ export default function RecipesList({
                   >
                     ✕
                   </button>
+                  {inventoryItems.length > 0 && (
+                    <div className="col-span-3 flex min-w-0 items-center gap-2 pt-1">
+                      <select
+                        value={ing.inventoryItemId ?? ""}
+                        onChange={(e) => {
+                          const inventoryItemId = e.target.value || null;
+                          patchIngredientLocal(r.id, ing.id, { inventoryItemId });
+                          commitIngredient(ing.id, { inventoryItemId });
+                        }}
+                        className="min-h-11 w-0 min-w-0 flex-1 rounded border border-divider bg-transparent text-[10px] text-text-on-ink-dim outline-none"
+                      >
+                        <option value="">{t("rec_stock_link_none")}</option>
+                        {inventoryItems.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name || "—"}
+                          </option>
+                        ))}
+                      </select>
+                      {ing.inventoryItemId && (
+                        <div className="flex min-h-11 items-center gap-1 rounded border border-divider px-1.5">
+                          <input
+                            type="number"
+                            min={0}
+                            step={0.001}
+                            defaultValue={ing.quantityPerPortion}
+                            onChange={(e) =>
+                              patchIngredientLocal(r.id, ing.id, {
+                                quantityPerPortion: parseFloat(e.target.value) || 0,
+                              })
+                            }
+                            onBlur={(e) =>
+                              commitIngredient(ing.id, {
+                                quantityPerPortion: parseFloat(e.target.value) || 0,
+                              })
+                            }
+                            className="w-14 bg-transparent text-right font-num text-[10px] outline-none"
+                          />
+                          <span className="text-[9px] text-text-on-ink-dim">
+                            {inventoryItems.find((i) => i.id === ing.inventoryItemId)?.unit}/
+                            {t("rec_stock_per_portion")}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -283,6 +361,12 @@ export default function RecipesList({
       </button>
 
       <p className="text-center text-xs text-text-on-ink-dim">{t("rec_disclaimer")}</p>
+
+      <UndoToast
+        visible={pending !== null}
+        label={t("undo_removed").replace("{name}", pending?.name || "")}
+        onUndo={undo}
+      />
     </div>
   );
 }

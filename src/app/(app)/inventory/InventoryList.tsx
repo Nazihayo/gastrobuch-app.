@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { useLanguage } from "@/lib/i18n/context";
+import { useUndoableRemove } from "@/lib/useUndoableRemove";
+import UndoToast from "@/components/UndoToast";
 import {
   addInventoryItem,
   removeInventoryItem,
@@ -18,9 +20,24 @@ export default function InventoryList({
   const [items, setItems] = useState<InventoryItem[]>(initialItems);
   const [, startTransition] = useTransition();
 
+  const commitRemove = useCallback(
+    (item: InventoryItem) => {
+      setItems((prev) => prev.filter((row) => row.id !== item.id));
+      startTransition(() => {
+        removeInventoryItem(item.id, item.name);
+      });
+    },
+    [startTransition]
+  );
+  const { pending, scheduleRemove, undo } = useUndoableRemove(commitRemove);
+  const visibleItems = useMemo(
+    () => items.filter((it) => it.id !== pending?.id),
+    [items, pending]
+  );
+
   const needOrderCount = useMemo(
-    () => items.filter((it) => Math.max((it.needed || 0) - (it.remaining || 0), 0) > 0).length,
-    [items]
+    () => visibleItems.filter((it) => Math.max((it.needed || 0) - (it.remaining || 0), 0) > 0).length,
+    [visibleItems]
   );
 
   function patchLocal(id: string, patch: Partial<InventoryItem>) {
@@ -38,13 +55,6 @@ export default function InventoryList({
     if (created) setItems((prev) => [...prev, created]);
   }
 
-  function handleRemove(item: InventoryItem) {
-    setItems((prev) => prev.filter((row) => row.id !== item.id));
-    startTransition(() => {
-      removeInventoryItem(item.id, item.name);
-    });
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -58,10 +68,10 @@ export default function InventoryList({
       </div>
 
       <div className="flex flex-col gap-3">
-        {items.length === 0 && (
+        {visibleItems.length === 0 && (
           <p className="text-sm text-text-on-ink-dim">{t("inv_empty")}</p>
         )}
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           const order = Math.max((item.needed || 0) - (item.remaining || 0), 0);
           const warn = order > 0;
           return (
@@ -78,7 +88,7 @@ export default function InventoryList({
                   placeholder={t("inv_name_ph")}
                   onChange={(e) => patchLocal(item.id, { name: e.target.value })}
                   onBlur={(e) => commit(item.id, { name: e.target.value })}
-                  className="flex-1 bg-transparent text-sm font-medium outline-none"
+                  className="w-0 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none"
                 />
                 <input
                   type="text"
@@ -89,7 +99,7 @@ export default function InventoryList({
                 />
                 <button
                   type="button"
-                  onClick={() => handleRemove(item)}
+                  onClick={() => scheduleRemove(item)}
                   aria-label="remove"
                   className="flex h-11 w-11 shrink-0 items-center justify-center text-text-on-ink-dim hover:text-brand-red"
                 >
@@ -160,6 +170,12 @@ export default function InventoryList({
       </button>
 
       <p className="text-center text-xs text-text-on-ink-dim">{t("inv_disclaimer")}</p>
+
+      <UndoToast
+        visible={pending !== null}
+        label={t("undo_removed").replace("{name}", pending?.name || "")}
+        onUndo={undo}
+      />
     </div>
   );
 }

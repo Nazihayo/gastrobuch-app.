@@ -6,6 +6,9 @@ import { getCurrentRestaurant } from "@/lib/restaurant";
 const menuItems = [
   { href: "/customers", key: "more_customers" as const },
   { href: "/cashbook", key: "more_cashbook" as const },
+  { href: "/activity", key: "more_activity" as const },
+  { href: "/settings", key: "more_settings" as const },
+  { href: "/schedule", key: "more_schedule" as const },
   { href: "/expenses", key: "more_expenses" as const },
   { href: "/breakeven", key: "more_breakeven" as const },
   { href: "/recipes", key: "more_recipes" as const },

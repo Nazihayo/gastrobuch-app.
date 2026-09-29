@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { useLanguage } from "@/lib/i18n/context";
+import { useUndoableRemove } from "@/lib/useUndoableRemove";
+import UndoToast from "@/components/UndoToast";
 import { addCustomer, removeCustomer, updateCustomer, type Customer } from "./actions";
 
 export default function CustomersList({
@@ -14,16 +16,31 @@ export default function CustomersList({
   const [query, setQuery] = useState("");
   const [, startTransition] = useTransition();
 
+  const commitRemove = useCallback(
+    (c: Customer) => {
+      setCustomers((prev) => prev.filter((row) => row.id !== c.id));
+      startTransition(() => {
+        removeCustomer(c.id, c.name);
+      });
+    },
+    [startTransition]
+  );
+  const { pending, scheduleRemove, undo } = useUndoableRemove(commitRemove);
+  const visibleCustomers = useMemo(
+    () => customers.filter((c) => c.id !== pending?.id),
+    [customers, pending]
+  );
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return customers;
-    return customers.filter(
+    if (!q) return visibleCustomers;
+    return visibleCustomers.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.phone.toLowerCase().includes(q) ||
         c.address.toLowerCase().includes(q)
     );
-  }, [customers, query]);
+  }, [visibleCustomers, query]);
 
   function patchLocal(id: string, patch: Partial<Customer>) {
     setCustomers((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
@@ -38,13 +55,6 @@ export default function CustomersList({
   async function handleAdd() {
     const created = await addCustomer();
     if (created) setCustomers((prev) => [created, ...prev]);
-  }
-
-  function handleRemove(c: Customer) {
-    setCustomers((prev) => prev.filter((row) => row.id !== c.id));
-    startTransition(() => {
-      removeCustomer(c.id, c.name);
-    });
   }
 
   return (
@@ -73,7 +83,7 @@ export default function CustomersList({
       <div className="flex flex-col gap-3">
         {filtered.length === 0 && (
           <p className="text-sm text-text-on-ink-dim">
-            {customers.length === 0 ? t("cust_empty") : t("cust_no_match")}
+            {visibleCustomers.length === 0 ? t("cust_empty") : t("cust_no_match")}
           </p>
         )}
         {filtered.map((c) => (
@@ -85,11 +95,11 @@ export default function CustomersList({
                 placeholder={t("cust_name_ph")}
                 onChange={(e) => patchLocal(c.id, { name: e.target.value })}
                 onBlur={(e) => commit(c.id, { name: e.target.value })}
-                className="min-h-11 flex-1 bg-transparent text-sm font-medium outline-none"
+                className="min-h-11 w-0 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none"
               />
               <button
                 type="button"
-                onClick={() => handleRemove(c)}
+                onClick={() => scheduleRemove(c)}
                 aria-label="remove"
                 className="flex h-11 w-11 shrink-0 items-center justify-center text-text-on-ink-dim hover:text-brand-red"
               >
@@ -127,6 +137,12 @@ export default function CustomersList({
       </div>
 
       <p className="text-center text-xs text-text-on-ink-dim">{t("cust_disclaimer")}</p>
+
+      <UndoToast
+        visible={pending !== null}
+        label={t("undo_removed").replace("{name}", pending?.name || "")}
+        onUndo={undo}
+      />
     </div>
   );
 }

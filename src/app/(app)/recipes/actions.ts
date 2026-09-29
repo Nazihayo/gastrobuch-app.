@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentRestaurant } from "@/lib/restaurant";
 
-export type Ingredient = { id: string; name: string; cost: number };
+export type Ingredient = {
+  id: string;
+  name: string;
+  cost: number;
+  inventoryItemId: string | null;
+  quantityPerPortion: number;
+};
 export type RecipeHeader = {
   id: string;
   name: string;
@@ -80,25 +86,43 @@ export async function addIngredient(recipeId: string): Promise<Ingredient | null
   const { data, error } = await supabase
     .from("recipe_ingredients")
     .insert({ restaurant_id: restaurant.id, recipe_id: recipeId, name: "", cost: 0 })
-    .select("id, name, cost")
+    .select("id, name, cost, inventory_item_id, quantity_per_portion")
     .single();
 
   if (error || !data) return null;
 
   revalidatePath("/recipes");
-  return data;
+  return {
+    id: data.id,
+    name: data.name,
+    cost: data.cost,
+    inventoryItemId: data.inventory_item_id,
+    quantityPerPortion: data.quantity_per_portion,
+  };
 }
 
 export async function updateIngredient(
   id: string,
-  patch: Partial<Pick<Ingredient, "name" | "cost">>
+  patch: Partial<{
+    name: string;
+    cost: number;
+    inventoryItemId: string | null;
+    quantityPerPortion: number;
+  }>
 ): Promise<void> {
   const { restaurant } = await getCurrentRestaurant();
   const supabase = await createClient();
 
+  const dbPatch: Record<string, unknown> = {};
+  if (patch.name !== undefined) dbPatch.name = patch.name;
+  if (patch.cost !== undefined) dbPatch.cost = patch.cost;
+  if (patch.inventoryItemId !== undefined) dbPatch.inventory_item_id = patch.inventoryItemId;
+  if (patch.quantityPerPortion !== undefined)
+    dbPatch.quantity_per_portion = patch.quantityPerPortion;
+
   await supabase
     .from("recipe_ingredients")
-    .update(patch)
+    .update(dbPatch)
     .eq("id", id)
     .eq("restaurant_id", restaurant.id);
 

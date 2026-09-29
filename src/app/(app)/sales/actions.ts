@@ -26,6 +26,58 @@ function portions(formData: FormData): Record<string, number> {
   }
 }
 
+// Deducts linked-ingredient inventory by the CHANGE in portions sold since
+// the last save (not the full new count), so editing today's numbers twice
+// doesn't double-deduct stock.
+async function applyInventoryDeductions(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  restaurantId: string,
+  oldPortions: Record<string, number>,
+  newPortions: Record<string, number>
+): Promise<void> {
+  const recipeIds = new Set([...Object.keys(oldPortions), ...Object.keys(newPortions)]);
+  const deltas = new Map<string, number>();
+  for (const recipeId of recipeIds) {
+    const delta = (newPortions[recipeId] || 0) - (oldPortions[recipeId] || 0);
+    if (delta !== 0) deltas.set(recipeId, delta);
+  }
+  if (deltas.size === 0) return;
+
+  const { data: links } = await supabase
+    .from("recipe_ingredients")
+    .select("recipe_id, inventory_item_id, quantity_per_portion")
+    .eq("restaurant_id", restaurantId)
+    .in("recipe_id", Array.from(deltas.keys()))
+    .not("inventory_item_id", "is", null);
+
+  const deductionByItem = new Map<string, number>();
+  for (const link of links ?? []) {
+    const delta = deltas.get(link.recipe_id) ?? 0;
+    if (!link.inventory_item_id || delta === 0) continue;
+    const amount = delta * (link.quantity_per_portion || 0);
+    deductionByItem.set(
+      link.inventory_item_id,
+      (deductionByItem.get(link.inventory_item_id) ?? 0) + amount
+    );
+  }
+  if (deductionByItem.size === 0) return;
+
+  const { data: items } = await supabase
+    .from("inventory_items")
+    .select("id, remaining")
+    .in("id", Array.from(deductionByItem.keys()));
+
+  for (const item of items ?? []) {
+    const deduction = deductionByItem.get(item.id) ?? 0;
+    if (deduction === 0) continue;
+    await supabase
+      .from("inventory_items")
+      .update({ remaining: (item.remaining || 0) - deduction })
+      .eq("id", item.id)
+      .eq("restaurant_id", restaurantId);
+  }
+}
+
 export async function saveSalesDay(
   _prevState: SaveSalesDayState,
   formData: FormData
@@ -38,6 +90,16 @@ export async function saveSalesDay(
     return { error: "invalid date" };
   }
 
+  const newPortions = portions(formData);
+
+  const { data: existing } = await supabase
+    .from("sales_days")
+    .select("portions")
+    .eq("restaurant_id", restaurant.id)
+    .eq("date", date)
+    .maybeSingle();
+  const oldPortions = (existing?.portions as Record<string, number> | null) ?? {};
+
   const payload = {
     restaurant_id: restaurant.id,
     date,
@@ -46,7 +108,7 @@ export async function saveSalesDay(
     delivery: num(formData, "delivery"),
     commission_pct: num(formData, "commissionPct"),
     purchases: num(formData, "purchases"),
-    portions: portions(formData),
+    portions: newPortions,
   };
 
   const { error } = await supabase
@@ -57,6 +119,8 @@ export async function saveSalesDay(
     return { error: error.message };
   }
 
+  await applyInventoryDeductions(supabase, restaurant.id, oldPortions, newPortions);
+
   await supabase.from("audit_log").insert({
     restaurant_id: restaurant.id,
     user_id: (await supabase.auth.getUser()).data.user!.id,
@@ -66,5 +130,6 @@ export async function saveSalesDay(
 
   revalidatePath("/sales");
   revalidatePath("/waste-check");
+  revalidatePath("/inventory");
   return { savedAt: Date.now() };
 }

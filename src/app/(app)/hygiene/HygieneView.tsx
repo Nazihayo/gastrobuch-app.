@@ -98,7 +98,7 @@ export default function HygieneView({
                     placeholder={t("hyg_name_ph")}
                     onChange={(e) => patchTempLocal(temp.id, { name: e.target.value })}
                     onBlur={(e) => commitTemp(temp.id, { name: e.target.value })}
-                    className="flex-1 bg-transparent text-sm font-medium outline-none"
+                    className="w-0 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none"
                   />
                   <select
                     value={temp.type}

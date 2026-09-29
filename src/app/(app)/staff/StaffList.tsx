@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { COUNTRIES, fmtMoney, type CountryCode } from "@/lib/countries";
+import { useUndoableRemove } from "@/lib/useUndoableRemove";
+import UndoToast from "@/components/UndoToast";
 import {
   addStaffMember,
   removeStaffMember,
@@ -19,22 +21,44 @@ export default function StaffList({
 }) {
   const { t, locale } = useLanguage();
   const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
+  const [query, setQuery] = useState("");
   const [, startTransition] = useTransition();
   const conf = COUNTRIES[country];
   const minijobLimit = conf.minijob;
+
+  const commitRemove = useCallback(
+    (s: StaffMember) => {
+      setStaff((prev) => prev.filter((row) => row.id !== s.id));
+      startTransition(() => {
+        removeStaffMember(s.id, s.name);
+      });
+    },
+    [startTransition]
+  );
+  const { pending, scheduleRemove, undo } = useUndoableRemove(commitRemove);
+  const visibleStaff = useMemo(
+    () => staff.filter((s) => s.id !== pending?.id),
+    [staff, pending]
+  );
 
   const { totalHours, totalWages, anyOverMinijob } = useMemo(() => {
     let hours = 0;
     let wages = 0;
     let over = false;
-    for (const s of staff) {
+    for (const s of visibleStaff) {
       hours += s.hours || 0;
       const wage = (s.hours || 0) * (s.rate || 0);
       wages += wage;
       if (minijobLimit && wage > minijobLimit) over = true;
     }
     return { totalHours: hours, totalWages: wages, anyOverMinijob: over };
-  }, [staff, minijobLimit]);
+  }, [visibleStaff, minijobLimit]);
+
+  const searchedStaff = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return visibleStaff;
+    return visibleStaff.filter((s) => s.name.toLowerCase().includes(q));
+  }, [visibleStaff, query]);
 
   function patchLocal(id: string, patch: Partial<StaffMember>) {
     setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
@@ -51,13 +75,6 @@ export default function StaffList({
     if (created) setStaff((prev) => [...prev, created]);
   }
 
-  function handleRemove(s: StaffMember) {
-    setStaff((prev) => prev.filter((row) => row.id !== s.id));
-    startTransition(() => {
-      removeStaffMember(s.id, s.name);
-    });
-  }
-
   const lead = minijobLimit
     ? t("staff_lead_with_minijob").replace(
         "{limit}",
@@ -72,11 +89,23 @@ export default function StaffList({
         <p className="mt-1 text-sm text-text-on-ink-dim">{lead}</p>
       </div>
 
+      {visibleStaff.length > 5 && (
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("staff_search_ph")}
+          className="min-h-11 rounded-lg border border-divider bg-ink-soft px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+        />
+      )}
+
       <div className="flex flex-col gap-3">
-        {staff.length === 0 && (
-          <p className="text-sm text-text-on-ink-dim">{t("staff_empty")}</p>
+        {searchedStaff.length === 0 && (
+          <p className="text-sm text-text-on-ink-dim">
+            {visibleStaff.length === 0 ? t("staff_empty") : t("cust_no_match")}
+          </p>
         )}
-        {staff.map((s) => {
+        {searchedStaff.map((s) => {
           const wage = (s.hours || 0) * (s.rate || 0);
           const warn = Boolean(minijobLimit && wage > minijobLimit);
           return (
@@ -93,11 +122,11 @@ export default function StaffList({
                   placeholder={t("staff_name_ph")}
                   onChange={(e) => patchLocal(s.id, { name: e.target.value })}
                   onBlur={(e) => commit(s.id, { name: e.target.value })}
-                  className="flex-1 bg-transparent text-sm font-medium outline-none"
+                  className="w-0 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none"
                 />
                 <button
                   type="button"
-                  onClick={() => handleRemove(s)}
+                  onClick={() => scheduleRemove(s)}
                   aria-label="remove"
                   className="flex h-11 w-11 shrink-0 items-center justify-center text-text-on-ink-dim hover:text-brand-red"
                 >
@@ -154,7 +183,7 @@ export default function StaffList({
       </button>
 
       <div className="rounded-xl border border-divider bg-ink-soft p-5">
-        <Row label={t("staff_count")} value={String(staff.length)} />
+        <Row label={t("staff_count")} value={String(visibleStaff.length)} />
         <Row
           label={t("staff_hours_total")}
           value={totalHours.toLocaleString(locale === "ar" ? "ar" : "de-DE")}
@@ -176,6 +205,12 @@ export default function StaffList({
       <p className="text-center text-xs text-text-on-ink-dim">
         {t("staff_disclaimer")}
       </p>
+
+      <UndoToast
+        visible={pending !== null}
+        label={t("undo_removed").replace("{name}", pending?.name || "")}
+        onUndo={undo}
+      />
     </div>
   );
 }
