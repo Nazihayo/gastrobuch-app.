@@ -3,8 +3,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { CountryCode } from "@/lib/countries";
 
+export type MemberRole = "owner" | "staff" | "accountant";
+
 export type CurrentRestaurant = {
   userId: string;
+  role: MemberRole;
   restaurant: {
     id: string;
     name: string;
@@ -27,7 +30,7 @@ export const getCurrentRestaurant = cache(async (): Promise<CurrentRestaurant> =
 
   const { data: membership } = await supabase
     .from("memberships")
-    .select("restaurant_id")
+    .select("restaurant_id, role")
     .limit(1)
     .maybeSingle();
 
@@ -45,5 +48,5 @@ export const getCurrentRestaurant = cache(async (): Promise<CurrentRestaurant> =
     redirect("/onboarding");
   }
 
-  return { userId: user.id, restaurant };
+  return { userId: user.id, role: membership.role as MemberRole, restaurant };
 });

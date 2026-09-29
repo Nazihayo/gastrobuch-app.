@@ -9,6 +9,13 @@ export async function updateRestaurantProfile(patch: {
   phone?: string;
   address?: string;
   taxId?: string;
+  datevKontoFood?: string;
+  datevKontoDrink?: string;
+  datevKontoWages?: string;
+  datevKontoExpenses?: string;
+  datevKontoBank?: string;
+  datevBeraterNr?: string;
+  datevMandantNr?: string;
 }): Promise<void> {
   const { restaurant } = await getCurrentRestaurant();
   const supabase = await createClient();
@@ -18,6 +25,14 @@ export async function updateRestaurantProfile(patch: {
   if (patch.phone !== undefined) dbPatch.phone = patch.phone;
   if (patch.address !== undefined) dbPatch.address = patch.address;
   if (patch.taxId !== undefined) dbPatch.tax_id = patch.taxId;
+  if (patch.datevKontoFood !== undefined) dbPatch.datev_konto_food = patch.datevKontoFood;
+  if (patch.datevKontoDrink !== undefined) dbPatch.datev_konto_drink = patch.datevKontoDrink;
+  if (patch.datevKontoWages !== undefined) dbPatch.datev_konto_wages = patch.datevKontoWages;
+  if (patch.datevKontoExpenses !== undefined)
+    dbPatch.datev_konto_expenses = patch.datevKontoExpenses;
+  if (patch.datevKontoBank !== undefined) dbPatch.datev_konto_bank = patch.datevKontoBank;
+  if (patch.datevBeraterNr !== undefined) dbPatch.datev_berater_nr = patch.datevBeraterNr;
+  if (patch.datevMandantNr !== undefined) dbPatch.datev_mandant_nr = patch.datevMandantNr;
 
   await supabase.from("restaurants").update(dbPatch).eq("id", restaurant.id);
 

@@ -3,17 +3,8 @@
 import { useState } from "react";
 import { dictionaries, type Locale } from "@/lib/i18n/dictionaries";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
-
-type ReportDay = {
-  date: string;
-  food: number;
-  drink: number;
-  delivery: number;
-  purchases: number;
-  commissionAmount: number;
-  vatDue: number;
-  net: number;
-};
+import { buildDatevExport, datevFilename, type DatevConfig } from "@/lib/datev";
+import type { ReportDay } from "@/lib/reportData";
 
 function deNum(n: number): string {
   return n.toFixed(2).replace(".", ",");
@@ -28,6 +19,9 @@ export default function ReportView({
   expenses,
   finalNet,
   days,
+  periodStart,
+  periodEnd,
+  datevConfig,
 }: {
   locale: Locale;
   country: CountryCode;
@@ -37,9 +31,30 @@ export default function ReportView({
   expenses: number;
   finalNet: number;
   days: ReportDay[];
+  periodStart: string;
+  periodEnd: string;
+  datevConfig: DatevConfig;
 }) {
   const t = dictionaries[locale];
   const [exportStatus, setExportStatus] = useState<string | null>(null);
+
+  function downloadFile(content: string, filename: string) {
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  function handleDatevExport() {
+    const csv = buildDatevExport(days, wages, expenses, datevConfig, periodStart, periodEnd);
+    downloadFile(csv, datevFilename(periodStart));
+    setExportStatus(t.rep_export_done);
+  }
 
   function handleExport() {
     const rows = [
@@ -65,20 +80,8 @@ export default function ReportView({
     ];
 
     const csv = "﻿" + rows.join("\r\n");
-    const now = new Date();
-    const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const filename = `gastrobuch-bericht-${monthPrefix}.csv`;
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-
+    const monthPrefix = periodStart.slice(0, 7);
+    downloadFile(csv, `gastrobuch-bericht-${monthPrefix}.csv`);
     setExportStatus(t.rep_export_done);
   }
 
@@ -111,9 +114,17 @@ export default function ReportView({
         >
           {t.rep_export_btn}
         </button>
+        <button
+          type="button"
+          onClick={handleDatevExport}
+          className="min-h-11 rounded-lg border border-divider bg-ink-soft px-4 py-3 text-sm font-semibold"
+        >
+          {t.rep_export_datev_btn}
+        </button>
         {exportStatus && (
           <p className="text-center text-xs text-text-on-ink-dim">{exportStatus}</p>
         )}
+        <p className="text-center text-xs text-brand-red">{t.rep_export_datev_disclaimer}</p>
       </div>
 
       <div className="rounded-xl border border-divider bg-ink-soft p-5">

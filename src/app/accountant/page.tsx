@@ -2,9 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentRestaurant } from "@/lib/restaurant";
 import { getLocale } from "@/lib/i18n/server";
 import { getReportData } from "@/lib/reportData";
-import ReportView from "./ReportView";
+import ReportView from "@/app/(app)/reports/ReportView";
 
-export default async function ReportsPage() {
+export default async function AccountantPage() {
   const [{ restaurant }, locale] = await Promise.all([
     getCurrentRestaurant(),
     getLocale(),

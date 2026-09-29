@@ -11,12 +11,26 @@ export default function ProfileForm({
   phone,
   address,
   taxId,
+  datevKontoFood,
+  datevKontoDrink,
+  datevKontoWages,
+  datevKontoExpenses,
+  datevKontoBank,
+  datevBeraterNr,
+  datevMandantNr,
 }: {
   name: string;
   country: CountryCode;
   phone: string;
   address: string;
   taxId: string;
+  datevKontoFood: string;
+  datevKontoDrink: string;
+  datevKontoWages: string;
+  datevKontoExpenses: string;
+  datevKontoBank: string;
+  datevBeraterNr: string;
+  datevMandantNr: string;
 }) {
   const { t } = useLanguage();
   const [, startTransition] = useTransition();
@@ -67,6 +81,60 @@ export default function ProfileForm({
             onCommit={(v) => commit({ taxId: v })}
           />
         </Field>
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-xl border border-divider bg-ink-soft p-5">
+        <div>
+          <h2 className="text-sm font-semibold">{t("profile_datev_title")}</h2>
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_datev_lead")}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={t("profile_datev_food")}>
+            <TextInput
+              defaultValue={datevKontoFood}
+              onCommit={(v) => commit({ datevKontoFood: v })}
+            />
+          </Field>
+          <Field label={t("profile_datev_drink")}>
+            <TextInput
+              defaultValue={datevKontoDrink}
+              onCommit={(v) => commit({ datevKontoDrink: v })}
+            />
+          </Field>
+          <Field label={t("profile_datev_wages")}>
+            <TextInput
+              defaultValue={datevKontoWages}
+              onCommit={(v) => commit({ datevKontoWages: v })}
+            />
+          </Field>
+          <Field label={t("profile_datev_expenses")}>
+            <TextInput
+              defaultValue={datevKontoExpenses}
+              onCommit={(v) => commit({ datevKontoExpenses: v })}
+            />
+          </Field>
+          <Field label={t("profile_datev_bank")}>
+            <TextInput
+              defaultValue={datevKontoBank}
+              onCommit={(v) => commit({ datevKontoBank: v })}
+            />
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={t("profile_datev_berater")}>
+            <TextInput
+              defaultValue={datevBeraterNr}
+              onCommit={(v) => commit({ datevBeraterNr: v })}
+            />
+          </Field>
+          <Field label={t("profile_datev_mandant")}>
+            <TextInput
+              defaultValue={datevMandantNr}
+              onCommit={(v) => commit({ datevMandantNr: v })}
+            />
+          </Field>
+        </div>
+        <p className="text-xs text-brand-red">{t("profile_datev_disclaimer")}</p>
       </div>
 
       <p className="text-center text-xs text-text-on-ink-dim">{t("profile_disclaimer")}</p>
