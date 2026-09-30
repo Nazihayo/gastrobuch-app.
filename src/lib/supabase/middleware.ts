@@ -7,13 +7,17 @@ import { NextResponse, type NextRequest } from "next/server";
 // inline scripts it injects for hydration — no manual <Script nonce> wiring
 // needed since this app renders no inline scripts of its own.
 function buildCsp(nonce: string, supabaseUrl: string): string {
+  // Realtime (used by the live order alerts) connects over wss://, which is
+  // a distinct scheme from the https:// used for normal REST/auth calls —
+  // both must be explicitly allowed or the websocket connection is blocked.
+  const supabaseWsUrl = supabaseUrl.replace(/^https:/, "wss:");
   return `
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic';
     style-src 'self' 'unsafe-inline';
     img-src 'self' data:;
     font-src 'self';
-    connect-src 'self' ${supabaseUrl};
+    connect-src 'self' ${supabaseUrl} ${supabaseWsUrl};
     object-src 'none';
     base-uri 'self';
     form-action 'self';

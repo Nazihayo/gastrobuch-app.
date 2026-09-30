@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
+import { createClient } from "@/lib/supabase/client";
+import { playAlertSound } from "@/lib/playAlertSound";
 import { updateOrderStatus, type OrderStatus } from "./actions";
 
 export type OrderItem = { id: string; recipeName: string; unitPrice: number; quantity: number };
@@ -40,15 +42,99 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
 };
 
 export default function OrdersView({
+  restaurantId,
   country,
   initialOrders,
 }: {
+  restaurantId: string;
   country: CountryCode;
   initialOrders: OrderWithItems[];
 }) {
   const { t, locale } = useLanguage();
   const [orders, setOrders] = useState(initialOrders);
   const [, startTransition] = useTransition();
+  const [newOrderAlert, setNewOrderAlert] = useState<string | null>(null);
+  const alertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Ask for notification permission once, so a new order can also raise a
+  // system notification (works even if this tab isn't the focused one, as
+  // long as the browser is still open).
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`orders-${restaurantId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "orders",
+          filter: `restaurant_id=eq.${restaurantId}`,
+        },
+        async (payload) => {
+          const row = payload.new as {
+            id: string;
+            customer_name: string;
+            customer_phone: string;
+            customer_address: string;
+            order_type: string;
+            status: OrderStatus;
+            notes: string;
+            total_estimate: number;
+            created_at: string;
+          };
+
+          const { data: itemRows } = await supabase
+            .from("order_items")
+            .select("id, recipe_name, unit_price, quantity")
+            .eq("order_id", row.id);
+
+          const newOrder: OrderWithItems = {
+            id: row.id,
+            customerName: row.customer_name,
+            customerPhone: row.customer_phone,
+            customerAddress: row.customer_address,
+            orderType: row.order_type,
+            status: row.status,
+            notes: row.notes,
+            totalEstimate: row.total_estimate,
+            createdAt: row.created_at,
+            items: (itemRows ?? []).map((i) => ({
+              id: i.id,
+              recipeName: i.recipe_name,
+              unitPrice: i.unit_price,
+              quantity: i.quantity,
+            })),
+          };
+
+          setOrders((prev) => [newOrder, ...prev]);
+
+          playAlertSound();
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+            new Notification(t("orders_new_notification_title"), {
+              body: newOrder.customerName || t("orders_title"),
+            });
+          }
+
+          setNewOrderAlert(newOrder.customerName || t("orders_title"));
+          if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+          alertTimeoutRef.current = setTimeout(() => setNewOrderAlert(null), 5000);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t() is stable enough for this alert; re-subscribing on every locale change isn't needed
+  }, [restaurantId]);
 
   function advance(order: OrderWithItems) {
     const next = NEXT_STATUS[order.status];
@@ -71,6 +157,15 @@ export default function OrdersView({
 
   return (
     <div className="flex flex-col gap-6">
+      {newOrderAlert && (
+        <div
+          role="alert"
+          className="animate-pulse rounded-xl border border-brand-red bg-brand-red/20 px-4 py-3 text-sm font-semibold text-text-on-ink"
+        >
+          🚨 {t("orders_new_alert_banner")} {newOrderAlert}
+        </div>
+      )}
+
       <div>
         <h1 className="font-display text-2xl font-bold">{t("orders_title")}</h1>
         <p className="mt-1 text-sm text-text-on-ink-dim">{t("orders_lead")}</p>

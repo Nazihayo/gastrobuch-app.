@@ -341,6 +341,8 @@ export const dictionaries = {
     order_advance_to_ready: "Fertig",
     order_advance_to_completed: "Abschließen",
     order_cancel_btn: "Stornieren",
+    orders_new_notification_title: "🚨 Neue Bestellung!",
+    orders_new_alert_banner: "Neue Bestellung von",
 
     more_menu_engineering: "Menü-Analyse",
     me_title: "Menü-Analyse",
@@ -752,6 +754,8 @@ export const dictionaries = {
     order_advance_to_ready: "جاهز",
     order_advance_to_completed: "تم التسليم",
     order_cancel_btn: "إلغاء",
+    orders_new_notification_title: "🚨 طلب جديد!",
+    orders_new_alert_banner: "طلب جديد من",
 
     more_menu_engineering: "تحليل قائمة الطعام",
     me_title: "تحليل قائمة الطعام",
@@ -1163,6 +1167,8 @@ export const dictionaries = {
     order_advance_to_ready: "Mark ready",
     order_advance_to_completed: "Complete",
     order_cancel_btn: "Cancel",
+    orders_new_notification_title: "🚨 New order!",
+    orders_new_alert_banner: "New order from",
 
     more_menu_engineering: "Menu analysis",
     me_title: "Menu analysis",

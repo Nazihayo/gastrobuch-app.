@@ -33,5 +33,11 @@ export default async function OrdersPage() {
     })),
   }));
 
-  return <OrdersView country={restaurant.country} initialOrders={initialOrders} />;
+  return (
+    <OrdersView
+      restaurantId={restaurant.id}
+      country={restaurant.country}
+      initialOrders={initialOrders}
+    />
+  );
 }
