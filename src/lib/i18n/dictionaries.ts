@@ -174,6 +174,10 @@ export const dictionaries = {
     exp_total: "Fixkosten gesamt",
     exp_disclaimer: "Nur wiederkehrende Betriebskosten. Anschaffungen mit Abschreibung (AfA) bitte mit dem Steuerberater klären.",
     exp_empty: "Noch keine Ausgaben.",
+    exp_receipt_add: "Beleg hinzufügen",
+    exp_receipt_view: "Beleg ansehen",
+    exp_receipt_too_large: "Datei zu groß (max. 5 MB).",
+    exp_receipt_error: "Hochladen fehlgeschlagen. Bitte erneut versuchen.",
 
     more_recipes: "Rezeptkalkulation",
     rec_title: "Rezeptkalkulation",
@@ -538,6 +542,10 @@ export const dictionaries = {
     exp_total: "إجمالي المصاريف الثابتة",
     exp_disclaimer: "مصاريف تشغيل متكررة بس. مصاريف فيها إهلاك (AfA) راجعها مع المحاسب.",
     exp_empty: "لسه مفيش مصاريف.",
+    exp_receipt_add: "إضافة إيصال",
+    exp_receipt_view: "عرض الإيصال",
+    exp_receipt_too_large: "الملف كبير أوي (أقصى حد 5 ميجا).",
+    exp_receipt_error: "الرفع فشل. جرب تاني.",
 
     more_recipes: "تكلفة الوصفات",
     rec_title: "تكلفة الوصفات",
@@ -902,6 +910,10 @@ export const dictionaries = {
     exp_total: "Total fixed costs",
     exp_disclaimer: "Recurring operating costs only. Purchases with depreciation should be discussed with your accountant.",
     exp_empty: "No expenses yet.",
+    exp_receipt_add: "Add receipt",
+    exp_receipt_view: "View receipt",
+    exp_receipt_too_large: "File too large (max 5 MB).",
+    exp_receipt_error: "Upload failed. Please try again.",
 
     more_recipes: "Recipe costing",
     rec_title: "Recipe costing",

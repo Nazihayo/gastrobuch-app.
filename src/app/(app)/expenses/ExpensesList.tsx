@@ -6,7 +6,15 @@ import { useLanguage } from "@/lib/i18n/context";
 import { COUNTRIES, fmtMoney, type CountryCode } from "@/lib/countries";
 import { useUndoableRemove } from "@/lib/useUndoableRemove";
 import UndoToast from "@/components/UndoToast";
-import { addExpense, removeExpense, updateExpense, type Expense } from "./actions";
+import {
+  addExpense,
+  getReceiptUrl,
+  removeExpense,
+  removeReceipt,
+  updateExpense,
+  uploadReceipt,
+  type Expense,
+} from "./actions";
 
 export default function ExpensesList({
   country,
@@ -52,6 +60,33 @@ export default function ExpensesList({
   async function handleAdd() {
     const created = await addExpense();
     if (created) setExpenses((prev) => [...prev, created]);
+  }
+
+  const [receiptError, setReceiptError] = useState<string | null>(null);
+
+  async function handleReceiptChange(id: string, file: File | undefined) {
+    if (!file) return;
+    setReceiptError(null);
+    const formData = new FormData();
+    formData.set("receipt", file);
+    const result = await uploadReceipt(id, formData);
+    if (result.error) {
+      setReceiptError(result.error === "too_large" ? t("exp_receipt_too_large") : t("exp_receipt_error"));
+      return;
+    }
+    if (result.path) patchLocal(id, { receiptPath: result.path });
+  }
+
+  async function handleViewReceipt(path: string) {
+    const url = await getReceiptUrl(path);
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function handleRemoveReceipt(id: string) {
+    patchLocal(id, { receiptPath: null });
+    startTransition(() => {
+      removeReceipt(id);
+    });
   }
 
   return (
@@ -104,6 +139,36 @@ export default function ExpensesList({
                 ✕
               </button>
             </div>
+
+            {e.receiptPath ? (
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleViewReceipt(e.receiptPath!)}
+                  className="min-h-11 flex-1 rounded-md border border-divider px-2 text-left text-xs text-text-on-ink-dim underline"
+                >
+                  📎 {t("exp_receipt_view")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveReceipt(e.id)}
+                  aria-label="remove receipt"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center text-text-on-ink-dim hover:text-brand-red"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <label className="mt-2 flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-dashed border-divider text-xs text-text-on-ink-dim hover:text-text-on-ink">
+                📎 {t("exp_receipt_add")}
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="hidden"
+                  onChange={(ev) => handleReceiptChange(e.id, ev.target.files?.[0])}
+                />
+              </label>
+            )}
           </div>
         ))}
       </div>
@@ -124,6 +189,10 @@ export default function ExpensesList({
           </span>
         </div>
       </div>
+
+      {receiptError && (
+        <p className="text-center text-sm text-brand-red">{receiptError}</p>
+      )}
 
       <p className="text-center text-xs text-text-on-ink-dim">{t("exp_disclaimer")}</p>
 

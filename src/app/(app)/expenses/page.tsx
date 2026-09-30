@@ -8,9 +8,16 @@ export default async function ExpensesPage() {
 
   const { data: expenses } = await supabase
     .from("expenses")
-    .select("id, name, amount")
+    .select("id, name, amount, receipt_path")
     .eq("restaurant_id", restaurant.id)
     .order("created_at", { ascending: true });
 
-  return <ExpensesList country={restaurant.country} initialExpenses={expenses ?? []} />;
+  const initialExpenses = (expenses ?? []).map((e) => ({
+    id: e.id,
+    name: e.name,
+    amount: e.amount,
+    receiptPath: e.receipt_path,
+  }));
+
+  return <ExpensesList country={restaurant.country} initialExpenses={initialExpenses} />;
 }
