@@ -97,6 +97,11 @@ export default function CustomersList({
                 onBlur={(e) => commit(c.id, { name: e.target.value })}
                 className="min-h-11 w-0 min-w-0 flex-1 bg-transparent text-sm font-medium outline-none"
               />
+              {c.totalOrders > 0 && (
+                <span className="shrink-0 rounded-full bg-ink-soft px-2 py-1 font-num text-[10px] text-text-on-ink-dim">
+                  {c.totalOrders}× {t("cust_orders_badge")}
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => scheduleRemove(c)}

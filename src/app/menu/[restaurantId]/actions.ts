@@ -12,7 +12,13 @@ export type CustomerInfo = {
 };
 
 export type SubmitOrderError = "empty_cart" | "missing_info" | "missing_address" | "generic";
-export type SubmitOrderState = { error?: SubmitOrderError; success?: boolean };
+export type LoyaltyProgress = {
+  totalOrders: number;
+  threshold: number;
+  reward: string;
+  rewardEarned: boolean;
+};
+export type SubmitOrderState = { error?: SubmitOrderError; success?: boolean; loyalty?: LoyaltyProgress };
 
 export async function submitOrder(
   restaurantId: string,
@@ -30,19 +36,40 @@ export async function submitOrder(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("create_public_order", {
-    target_restaurant_id: restaurantId,
-    customer_name: customer.name.trim(),
-    customer_phone: customer.phone.trim(),
-    customer_address: customer.address.trim(),
-    order_type: customer.orderType,
-    notes: customer.notes.trim(),
-    items: cart,
-  });
+  const { data, error } = await supabase
+    .rpc("create_public_order", {
+      target_restaurant_id: restaurantId,
+      customer_name: customer.name.trim(),
+      customer_phone: customer.phone.trim(),
+      customer_address: customer.address.trim(),
+      order_type: customer.orderType,
+      notes: customer.notes.trim(),
+      items: cart,
+    })
+    .single();
 
-  if (error) {
+  if (error || !data) {
     return { error: "generic" };
   }
 
-  return { success: true };
+  const row = data as {
+    customer_total_orders: number;
+    loyalty_threshold: number;
+    loyalty_reward: string;
+    reward_earned: boolean;
+  };
+
+  if (!row.loyalty_reward) {
+    return { success: true };
+  }
+
+  return {
+    success: true,
+    loyalty: {
+      totalOrders: row.customer_total_orders,
+      threshold: row.loyalty_threshold,
+      reward: row.loyalty_reward,
+      rewardEarned: row.reward_earned,
+    },
+  };
 }

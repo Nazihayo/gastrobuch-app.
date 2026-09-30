@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
-import { submitOrder, type CustomerInfo } from "./actions";
+import { submitOrder, type CustomerInfo, type LoyaltyProgress } from "./actions";
 
 export type PublicMenuItem = {
   id: string;
@@ -35,6 +35,7 @@ export default function PublicMenuView({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [loyalty, setLoyalty] = useState<LoyaltyProgress | undefined>(undefined);
 
   function setQty(id: string, qty: number) {
     setCart((prev) => {
@@ -71,6 +72,7 @@ export default function PublicMenuView({
       setError(t(`order_error_${result.error}` as const));
       return;
     }
+    setLoyalty(result.loyalty);
     setSuccess(true);
   }
 
@@ -80,6 +82,20 @@ export default function PublicMenuView({
         <span className="text-4xl">✅</span>
         <h1 className="font-display text-2xl font-bold">{t("order_success_title")}</h1>
         <p className="text-sm text-text-on-ink-dim">{t("order_success_lead")}</p>
+        {loyalty && (
+          <div className="mt-2 rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 px-4 py-3">
+            {loyalty.rewardEarned ? (
+              <p className="text-sm font-semibold text-brand-green-bright">
+                {t("loyalty_earned_prefix")} {loyalty.reward}
+              </p>
+            ) : (
+              <p className="text-sm text-text-on-ink-dim">
+                {t("loyalty_progress_prefix")} {loyalty.totalOrders}/{loyalty.threshold} ·{" "}
+                {t("loyalty_progress_suffix")} {loyalty.reward}
+              </p>
+            )}
+          </div>
+        )}
       </main>
     );
   }

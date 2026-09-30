@@ -18,6 +18,8 @@ export default function ProfileForm({
   datevKontoBank,
   datevBeraterNr,
   datevMandantNr,
+  loyaltyThreshold,
+  loyaltyReward,
   menuUrl,
   menuQrDataUrl,
 }: {
@@ -33,6 +35,8 @@ export default function ProfileForm({
   datevKontoBank: string;
   datevBeraterNr: string;
   datevMandantNr: string;
+  loyaltyThreshold: number;
+  loyaltyReward: string;
   menuUrl: string;
   menuQrDataUrl: string | null;
 }) {
@@ -150,6 +154,32 @@ export default function ProfileForm({
           </Field>
         </div>
         <p className="text-xs text-brand-red">{t("profile_datev_disclaimer")}</p>
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-xl border border-divider bg-ink-soft p-5">
+        <div>
+          <h2 className="text-sm font-semibold">{t("profile_loyalty_title")}</h2>
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_loyalty_lead")}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={t("profile_loyalty_threshold")}>
+            <input
+              type="number"
+              min={1}
+              defaultValue={loyaltyThreshold}
+              onBlur={(e) => commit({ loyaltyThreshold: Math.max(1, Number(e.target.value) || 1) })}
+              className="min-h-11 rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+            />
+          </Field>
+          <Field label={t("profile_loyalty_reward")}>
+            <TextInput
+              defaultValue={loyaltyReward}
+              placeholder={t("profile_loyalty_reward_ph")}
+              onCommit={(v) => commit({ loyaltyReward: v })}
+            />
+          </Field>
+        </div>
+        <p className="text-xs text-text-on-ink-dim">{t("profile_loyalty_disabled_hint")}</p>
       </div>
 
       <div className="flex flex-col items-center gap-4 rounded-xl border border-divider bg-ink-soft p-5 text-center">

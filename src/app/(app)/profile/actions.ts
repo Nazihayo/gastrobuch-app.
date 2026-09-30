@@ -16,11 +16,13 @@ export async function updateRestaurantProfile(patch: {
   datevKontoBank?: string;
   datevBeraterNr?: string;
   datevMandantNr?: string;
+  loyaltyThreshold?: number;
+  loyaltyReward?: string;
 }): Promise<void> {
   const { restaurant } = await getCurrentRestaurant();
   const supabase = await createClient();
 
-  const dbPatch: Record<string, string> = {};
+  const dbPatch: Record<string, string | number> = {};
   if (patch.name !== undefined) dbPatch.name = patch.name;
   if (patch.phone !== undefined) dbPatch.phone = patch.phone;
   if (patch.address !== undefined) dbPatch.address = patch.address;
@@ -33,6 +35,8 @@ export async function updateRestaurantProfile(patch: {
   if (patch.datevKontoBank !== undefined) dbPatch.datev_konto_bank = patch.datevKontoBank;
   if (patch.datevBeraterNr !== undefined) dbPatch.datev_berater_nr = patch.datevBeraterNr;
   if (patch.datevMandantNr !== undefined) dbPatch.datev_mandant_nr = patch.datevMandantNr;
+  if (patch.loyaltyThreshold !== undefined) dbPatch.loyalty_threshold = patch.loyaltyThreshold;
+  if (patch.loyaltyReward !== undefined) dbPatch.loyalty_reward = patch.loyaltyReward;
 
   await supabase.from("restaurants").update(dbPatch).eq("id", restaurant.id);
 

@@ -11,7 +11,7 @@ export default async function ProfilePage() {
     supabase
       .from("restaurants")
       .select(
-        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr"
+        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, loyalty_threshold, loyalty_reward"
       )
       .eq("id", restaurant.id)
       .single(),
@@ -41,6 +41,8 @@ export default async function ProfilePage() {
       datevKontoBank={data?.datev_konto_bank ?? ""}
       datevBeraterNr={data?.datev_berater_nr ?? ""}
       datevMandantNr={data?.datev_mandant_nr ?? ""}
+      loyaltyThreshold={data?.loyalty_threshold ?? 10}
+      loyaltyReward={data?.loyalty_reward ?? ""}
       menuUrl={menuUrl}
       menuQrDataUrl={menuQrDataUrl}
     />

@@ -10,6 +10,7 @@ export type Customer = {
   phone: string;
   address: string;
   notes: string;
+  totalOrders: number;
 };
 
 export async function addCustomer(): Promise<Customer | null> {
@@ -19,7 +20,7 @@ export async function addCustomer(): Promise<Customer | null> {
   const { data, error } = await supabase
     .from("customers")
     .insert({ restaurant_id: restaurant.id, name: "", phone: "", address: "", notes: "" })
-    .select("id, name, phone, address, notes")
+    .select("id, name, phone, address, notes, total_orders")
     .single();
 
   if (error || !data) return null;
@@ -32,7 +33,14 @@ export async function addCustomer(): Promise<Customer | null> {
   });
 
   revalidatePath("/customers");
-  return data;
+  return {
+    id: data.id,
+    name: data.name,
+    phone: data.phone,
+    address: data.address,
+    notes: data.notes,
+    totalOrders: data.total_orders,
+  };
 }
 
 export async function updateCustomer(
