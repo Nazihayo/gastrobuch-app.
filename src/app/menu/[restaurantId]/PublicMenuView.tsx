@@ -36,6 +36,7 @@ export default function PublicMenuView({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loyalty, setLoyalty] = useState<LoyaltyProgress | undefined>(undefined);
+  const [orderId, setOrderId] = useState<string | undefined>(undefined);
 
   function setQty(id: string, qty: number) {
     setCart((prev) => {
@@ -73,6 +74,7 @@ export default function PublicMenuView({
       return;
     }
     setLoyalty(result.loyalty);
+    setOrderId(result.orderId);
     setSuccess(true);
   }
 
@@ -95,6 +97,14 @@ export default function PublicMenuView({
               </p>
             )}
           </div>
+        )}
+        {orderId && (
+          <a
+            href={`/track/${orderId}`}
+            className="mt-2 flex min-h-11 items-center justify-center rounded-lg border border-divider px-4 text-sm font-semibold"
+          >
+            {t("order_success_track_btn")}
+          </a>
         )}
       </main>
     );

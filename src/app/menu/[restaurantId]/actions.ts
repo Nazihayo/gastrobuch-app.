@@ -18,7 +18,12 @@ export type LoyaltyProgress = {
   reward: string;
   rewardEarned: boolean;
 };
-export type SubmitOrderState = { error?: SubmitOrderError; success?: boolean; loyalty?: LoyaltyProgress };
+export type SubmitOrderState = {
+  error?: SubmitOrderError;
+  success?: boolean;
+  orderId?: string;
+  loyalty?: LoyaltyProgress;
+};
 
 export async function submitOrder(
   restaurantId: string,
@@ -53,6 +58,7 @@ export async function submitOrder(
   }
 
   const row = data as {
+    order_id: string;
     customer_total_orders: number;
     loyalty_threshold: number;
     loyalty_reward: string;
@@ -60,11 +66,12 @@ export async function submitOrder(
   };
 
   if (!row.loyalty_reward) {
-    return { success: true };
+    return { success: true, orderId: row.order_id };
   }
 
   return {
     success: true,
+    orderId: row.order_id,
     loyalty: {
       totalOrders: row.customer_total_orders,
       threshold: row.loyalty_threshold,
