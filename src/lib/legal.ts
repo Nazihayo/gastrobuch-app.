@@ -12,7 +12,7 @@ export const privacyContent: Record<Locale, LegalPage> = {
     title: "Datenschutz",
     updated: "Stand: 2026",
     intro:
-      "Gastrobuch ist ein internes Werkzeug zur Restaurant-Buchhaltung. Diese Seite beschreibt, welche Daten gespeichert werden und wie — ohne Marketing-Floskeln.",
+      "GastroHub ist ein internes Werkzeug zur Restaurantführung (Buchhaltung, Bestellungen, Kundenverwaltung). Diese Seite beschreibt, welche Daten gespeichert werden und wie — ohne Marketing-Floskeln.",
     sections: [
       {
         heading: "Welche Daten werden gespeichert",
@@ -40,7 +40,7 @@ export const privacyContent: Record<Locale, LegalPage> = {
     title: "سياسة الخصوصية",
     updated: "آخر تحديث: 2026",
     intro:
-      "Gastrobuch أداة داخلية لمحاسبة المطاعم. الصفحة دي بتشرح بالظبط إيه البيانات المحفوظة وإزاي — من غير كلام تسويقي.",
+      "GastroHub أداة داخلية لإدارة المطاعم (محاسبة، طلبات، إدارة عملاء). الصفحة دي بتشرح بالظبط إيه البيانات المحفوظة وإزاي — من غير كلام تسويقي.",
     sections: [
       {
         heading: "إيه البيانات المحفوظة",
@@ -68,7 +68,7 @@ export const privacyContent: Record<Locale, LegalPage> = {
     title: "Privacy",
     updated: "Last updated: 2026",
     intro:
-      "Gastrobuch is an internal restaurant-bookkeeping tool. This page describes exactly what data is stored and how — no marketing language.",
+      "GastroHub is an internal restaurant management tool (bookkeeping, orders, customer management). This page describes exactly what data is stored and how — no marketing language.",
     sections: [
       {
         heading: "What data is stored",
@@ -99,7 +99,7 @@ export const termsContent: Record<Locale, LegalPage> = {
     title: "Nutzungsbedingungen",
     updated: "Stand: 2026",
     intro:
-      "Mit der Nutzung von Gastrobuch akzeptierst du die folgenden Punkte.",
+      "Mit der Nutzung von GastroHub akzeptierst du die folgenden Punkte.",
     sections: [
       {
         heading: "Keine Steuer- oder Rechtsberatung",
@@ -122,7 +122,7 @@ export const termsContent: Record<Locale, LegalPage> = {
   ar: {
     title: "شروط الاستخدام",
     updated: "آخر تحديث: 2026",
-    intro: "باستخدامك لـ Gastrobuch إنت موافق على النقط الجاية.",
+    intro: "باستخدامك لـ GastroHub إنت موافق على النقط الجاية.",
     sections: [
       {
         heading: "مش استشارة ضريبية أو قانونية",
@@ -145,7 +145,7 @@ export const termsContent: Record<Locale, LegalPage> = {
   en: {
     title: "Terms of use",
     updated: "Last updated: 2026",
-    intro: "By using Gastrobuch you accept the following points.",
+    intro: "By using GastroHub you accept the following points.",
     sections: [
       {
         heading: "Not tax or legal advice",

@@ -94,7 +94,7 @@ export function buildDatevExport(
     "4",
     compact(periodStart),
     compact(periodEndStr),
-    csvField("Gastrobuch Export"),
+    csvField("GastroHub Export"),
     "",
     "1",
     "",

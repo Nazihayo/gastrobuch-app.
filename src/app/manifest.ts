@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Gastrobuch",
-    short_name: "Gastrobuch",
+    name: "GastroHub",
+    short_name: "GastroHub",
     description:
-      "Restaurant-Buchhaltung: Steuer, Personal, Lager, Hygiene an einem Ort.",
+      "Restaurant-Betriebssystem: Bestellungen, Kasse, Personal, Lager und Kundenbindung an einem Ort.",
     start_url: "/",
     display: "standalone",
     background_color: "#14171a",

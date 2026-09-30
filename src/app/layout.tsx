@@ -23,9 +23,10 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gastrobuch",
-  description: "Restaurant-Buchhaltung: Steuer, Personal, Lager, Hygiene an einem Ort.",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Gastrobuch" },
+  title: "GastroHub",
+  description:
+    "Restaurant-Betriebssystem: Bestellungen, Kasse, Personal, Lager und Kundenbindung an einem Ort.",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "GastroHub" },
 };
 
 export const viewport: Viewport = {

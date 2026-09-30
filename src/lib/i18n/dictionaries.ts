@@ -5,10 +5,10 @@ export const DEFAULT_LOCALE: Locale = "de";
 
 export const dictionaries = {
   de: {
-    app_title: "Gastrobuch",
+    app_title: "GastroHub",
 
     login_title: "Anmelden",
-    login_lead: "Melde dich an, um dein Gastrobuch zu öffnen.",
+    login_lead: "Melde dich an, um dein GastroHub zu öffnen.",
     login_email: "E-Mail",
     login_password: "Passwort",
     login_submit: "Anmelden",
@@ -181,7 +181,7 @@ export const dictionaries = {
 
     more_recipes: "Rezeptkalkulation",
     rec_title: "Rezeptkalkulation",
-    rec_lead: "Zutatenkosten pro Gericht eintragen — Gastrobuch zeigt dir Kosten, Marge und Gewinn pro Verkauf.",
+    rec_lead: "Zutatenkosten pro Gericht eintragen — GastroHub zeigt dir Kosten, Marge und Gewinn pro Verkauf.",
     rec_add: "+ Gericht hinzufügen",
     rec_name_ph: "Gerichtname",
     rec_price_label: "Verkaufspreis",
@@ -211,7 +211,7 @@ export const dictionaries = {
 
     more_goals: "Monatsziele",
     goals_title: "Monatsziele",
-    goals_lead: "Setz dir Ziele für diesen Monat — Gastrobuch zeigt dir live, wie nah du dran bist.",
+    goals_lead: "Setz dir Ziele für diesen Monat — GastroHub zeigt dir live, wie nah du dran bist.",
     goals_target_sales: "Umsatzziel",
     goals_target_labor: "Ziel: Personalkosten (max. % vom Umsatz)",
     goals_target_net: "Zielgewinn (Netto)",
@@ -433,7 +433,7 @@ export const dictionaries = {
     cust_disclaimer: "Nur für deinen internen Gebrauch — keine Verbindung zu Lieferando, Wolt oder anderen Plattformen.",
   },
   ar: {
-    app_title: "Gastrobuch",
+    app_title: "GastroHub",
 
     login_title: "تسجيل الدخول",
     login_lead: "سجّل دخولك عشان تفتح دفتر مطعمك.",
@@ -609,7 +609,7 @@ export const dictionaries = {
 
     more_recipes: "تكلفة الوصفات",
     rec_title: "تكلفة الوصفات",
-    rec_lead: "سجّل تكلفة مكونات كل طبق - Gastrobuch يوريك التكلفة والهامش والربح لكل مرة بيتباع.",
+    rec_lead: "سجّل تكلفة مكونات كل طبق - GastroHub يوريك التكلفة والهامش والربح لكل مرة بيتباع.",
     rec_add: "+ إضافة طبق",
     rec_name_ph: "اسم الطبق",
     rec_price_label: "سعر البيع",
@@ -639,7 +639,7 @@ export const dictionaries = {
 
     more_goals: "أهداف الشهر",
     goals_title: "أهداف الشهر",
-    goals_lead: "حدد أهداف الشهر ده - Gastrobuch يوريك لحظياً قربت منها قد إيه.",
+    goals_lead: "حدد أهداف الشهر ده - GastroHub يوريك لحظياً قربت منها قد إيه.",
     goals_target_sales: "هدف المبيعات",
     goals_target_labor: "هدف: أقصى نسبة أجور من المبيعات",
     goals_target_net: "هدف الصافي",
@@ -861,10 +861,10 @@ export const dictionaries = {
     cust_disclaimer: "لاستخدامك الداخلي بس - مفيش ربط مع Lieferando أو Wolt أو أي منصة تانية.",
   },
   en: {
-    app_title: "Gastrobuch",
+    app_title: "GastroHub",
 
     login_title: "Sign in",
-    login_lead: "Sign in to open your Gastrobuch.",
+    login_lead: "Sign in to open your GastroHub.",
     login_email: "Email",
     login_password: "Password",
     login_submit: "Sign in",
@@ -1037,7 +1037,7 @@ export const dictionaries = {
 
     more_recipes: "Recipe costing",
     rec_title: "Recipe costing",
-    rec_lead: "Enter ingredient cost per dish — Gastrobuch shows you cost, margin, and profit per sale.",
+    rec_lead: "Enter ingredient cost per dish — GastroHub shows you cost, margin, and profit per sale.",
     rec_add: "+ Add dish",
     rec_name_ph: "Dish name",
     rec_price_label: "Selling price",
@@ -1067,7 +1067,7 @@ export const dictionaries = {
 
     more_goals: "Monthly goals",
     goals_title: "Monthly goals",
-    goals_lead: "Set goals for this month — Gastrobuch shows you live how close you are.",
+    goals_lead: "Set goals for this month — GastroHub shows you live how close you are.",
     goals_target_sales: "Sales target",
     goals_target_labor: "Target: labor cost (max % of sales)",
     goals_target_net: "Profit target (net)",
