@@ -8,9 +8,9 @@ export type MenuItem = {
   portionsSold: number;
 };
 
-type Quadrant = "star" | "puzzle" | "plowhorse" | "dog";
+export type Quadrant = "star" | "puzzle" | "plowhorse" | "dog";
 
-function classify(items: MenuItem[]): Map<string, Quadrant> {
+export function classify(items: MenuItem[]): Map<string, Quadrant> {
   const totalPortions = items.reduce((sum, i) => sum + i.portionsSold, 0);
   const avgMargin =
     items.length > 0 ? items.reduce((sum, i) => sum + i.marginPct, 0) / items.length : 0;
