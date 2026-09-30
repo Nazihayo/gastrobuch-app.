@@ -11,6 +11,7 @@ export type Customer = {
   address: string;
   notes: string;
   totalOrders: number;
+  lastOrderAt: string | null;
 };
 
 export async function addCustomer(): Promise<Customer | null> {
@@ -40,6 +41,7 @@ export async function addCustomer(): Promise<Customer | null> {
     address: data.address,
     notes: data.notes,
     totalOrders: data.total_orders,
+    lastOrderAt: null,
   };
 }
 

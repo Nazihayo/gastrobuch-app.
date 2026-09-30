@@ -6,6 +6,12 @@ import { useUndoableRemove } from "@/lib/useUndoableRemove";
 import UndoToast from "@/components/UndoToast";
 import { addCustomer, removeCustomer, updateCustomer, type Customer } from "./actions";
 
+const AT_RISK_DAYS = 30;
+
+function daysSince(iso: string): number {
+  return Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export default function CustomersList({
   initialCustomers,
 }: {
@@ -111,6 +117,16 @@ export default function CustomersList({
                 ✕
               </button>
             </div>
+            {c.lastOrderAt && (
+              <p
+                className={`mb-2 text-[11px] ${
+                  daysSince(c.lastOrderAt) > AT_RISK_DAYS ? "text-brand-red" : "text-text-on-ink-dim"
+                }`}
+              >
+                {daysSince(c.lastOrderAt) > AT_RISK_DAYS && "⚠️ "}
+                {t("cust_last_order_prefix")} {daysSince(c.lastOrderAt)} {t("cust_last_order_days_suffix")}
+              </p>
+            )}
             <div className="flex flex-col gap-2">
               <input
                 type="tel"
