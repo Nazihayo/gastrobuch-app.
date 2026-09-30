@@ -90,6 +90,18 @@ export default function TrackOrderView({
         </span>
       </div>
 
+      {order.orderType === "dine_in" && order.tableSessionTotal !== null && (
+        <div className="rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 p-4 text-center">
+          <p className="text-sm text-text-on-ink-dim">
+            {t("track_table_total_prefix")}{" "}
+            <span className="font-num font-bold text-brand-green-bright">
+              {fmtMoney(order.tableSessionTotal, order.restaurantCountry)}
+            </span>
+          </p>
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("track_table_total_hint")}</p>
+        </div>
+      )}
+
       <p className="text-center text-xs text-text-on-ink-dim">{t("track_polling_hint")}</p>
     </main>
   );

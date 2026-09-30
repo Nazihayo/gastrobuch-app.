@@ -59,7 +59,7 @@ export async function submitOrder(
       order_type: customer.orderType,
       notes: customer.notes.trim(),
       items: cart,
-      table_number: customer.tableNumber.trim(),
+      p_table_number: customer.tableNumber.trim(),
     })
     .single();
 

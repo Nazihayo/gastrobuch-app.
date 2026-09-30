@@ -12,6 +12,7 @@ export type PublicOrderStatus = {
   totalEstimate: number;
   restaurantName: string;
   restaurantCountry: CountryCode;
+  tableSessionTotal: number | null;
 };
 
 export async function getOrderStatus(orderId: string): Promise<PublicOrderStatus | null> {
@@ -30,6 +31,7 @@ export async function getOrderStatus(orderId: string): Promise<PublicOrderStatus
     total_estimate: number;
     restaurant_name: string;
     restaurant_country: CountryCode;
+    table_session_total: number | null;
   };
 
   return {
@@ -40,5 +42,6 @@ export async function getOrderStatus(orderId: string): Promise<PublicOrderStatus
     totalEstimate: row.total_estimate,
     restaurantName: row.restaurant_name,
     restaurantCountry: row.restaurant_country,
+    tableSessionTotal: row.table_session_total,
   };
 }

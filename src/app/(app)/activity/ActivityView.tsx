@@ -23,6 +23,7 @@ const ACTION_KEYS: Record<string, TranslationKey> = {
   sales_day_saved: "activity_sales_saved",
   staff_member_added: "activity_staff_added",
   staff_member_removed: "activity_staff_removed",
+  table_session_closed: "activity_table_closed",
 };
 
 export default function ActivityView({ entries }: { entries: ActivityEntry[] }) {

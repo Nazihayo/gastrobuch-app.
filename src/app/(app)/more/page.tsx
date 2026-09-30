@@ -5,6 +5,7 @@ import { getCurrentRestaurant } from "@/lib/restaurant";
 
 const menuItems = [
   { href: "/orders", key: "more_orders" as const },
+  { href: "/tables", key: "more_tables" as const },
   { href: "/customers", key: "more_customers" as const },
   { href: "/cashbook", key: "more_cashbook" as const },
   { href: "/activity", key: "more_activity" as const },
