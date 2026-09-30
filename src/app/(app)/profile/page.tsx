@@ -11,7 +11,7 @@ export default async function ProfilePage() {
     supabase
       .from("restaurants")
       .select(
-        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, loyalty_threshold, loyalty_reward"
+        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, loyalty_threshold, loyalty_reward, table_count"
       )
       .eq("id", restaurant.id)
       .single(),
@@ -26,6 +26,17 @@ export default async function ProfilePage() {
   const menuUrl = `${siteUrl}/menu/${restaurant.id}`;
   const hasMenuItems = (menuItemCount ?? 0) > 0;
   const menuQrDataUrl = hasMenuItems ? await QRCode.toDataURL(menuUrl, { margin: 1 }) : null;
+
+  const tableCount = data?.table_count ?? 0;
+  const tableQrCodes =
+    hasMenuItems && tableCount > 0
+      ? await Promise.all(
+          Array.from({ length: tableCount }, (_, i) => i + 1).map(async (n) => ({
+            number: n,
+            qrDataUrl: await QRCode.toDataURL(`${menuUrl}?table=${n}`, { margin: 1 }),
+          }))
+        )
+      : [];
 
   return (
     <ProfileForm
@@ -43,6 +54,9 @@ export default async function ProfilePage() {
       datevMandantNr={data?.datev_mandant_nr ?? ""}
       loyaltyThreshold={data?.loyalty_threshold ?? 10}
       loyaltyReward={data?.loyalty_reward ?? ""}
+      tableCount={tableCount}
+      tableQrCodes={tableQrCodes}
+      hasMenuItems={hasMenuItems}
       menuUrl={menuUrl}
       menuQrDataUrl={menuQrDataUrl}
     />

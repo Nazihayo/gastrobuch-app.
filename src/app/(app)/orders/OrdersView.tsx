@@ -13,6 +13,7 @@ export type OrderWithItems = {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
+  tableNumber: string;
   orderType: string;
   status: OrderStatus;
   notes: string;
@@ -83,6 +84,7 @@ export default function OrdersView({
             customer_name: string;
             customer_phone: string;
             customer_address: string;
+            table_number: string;
             order_type: string;
             status: OrderStatus;
             notes: string;
@@ -100,6 +102,7 @@ export default function OrdersView({
             customerName: row.customer_name,
             customerPhone: row.customer_phone,
             customerAddress: row.customer_address,
+            tableNumber: row.table_number,
             orderType: row.order_type,
             status: row.status,
             notes: row.notes,
@@ -198,7 +201,9 @@ export default function OrdersView({
             <p className="mt-1 text-xs text-text-on-ink-dim">
               {order.orderType === "delivery"
                 ? `🚴 ${t("order_type_delivery")} — ${order.customerAddress}`
-                : `🏠 ${t("order_type_pickup")}`}
+                : order.orderType === "dine_in"
+                  ? `🍽️ ${t("table_label")} ${order.tableNumber}`
+                  : `🏠 ${t("order_type_pickup")}`}
             </p>
 
             <div className="mt-3 flex flex-col gap-1 border-t border-divider pt-3">

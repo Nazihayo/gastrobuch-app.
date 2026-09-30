@@ -17,11 +17,13 @@ export default function PublicMenuView({
   restaurantName,
   country,
   items,
+  lockedTableNumber,
 }: {
   restaurantId: string;
   restaurantName: string;
   country: CountryCode;
   items: PublicMenuItem[];
+  lockedTableNumber?: string;
 }) {
   const { t } = useLanguage();
   const [cart, setCart] = useState<Record<string, number>>({});
@@ -29,7 +31,8 @@ export default function PublicMenuView({
     name: "",
     phone: "",
     address: "",
-    orderType: "pickup",
+    tableNumber: lockedTableNumber ?? "",
+    orderType: lockedTableNumber ? "dine_in" : "pickup",
     notes: "",
   });
   const [pending, setPending] = useState(false);
@@ -177,30 +180,47 @@ export default function PublicMenuView({
             </span>
           </div>
 
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setCustomer((c) => ({ ...c, orderType: "pickup" }))}
-              className={`min-h-11 flex-1 rounded-lg border px-3 text-sm font-medium ${
-                customer.orderType === "pickup"
-                  ? "border-brand-green-bright text-brand-green-bright"
-                  : "border-divider text-text-on-ink-dim"
-              }`}
-            >
-              {t("order_type_pickup")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setCustomer((c) => ({ ...c, orderType: "delivery" }))}
-              className={`min-h-11 flex-1 rounded-lg border px-3 text-sm font-medium ${
-                customer.orderType === "delivery"
-                  ? "border-brand-green-bright text-brand-green-bright"
-                  : "border-divider text-text-on-ink-dim"
-              }`}
-            >
-              {t("order_type_delivery")}
-            </button>
-          </div>
+          {lockedTableNumber ? (
+            <div className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand-green-bright bg-brand-green-bright/10 px-3 text-sm font-semibold text-brand-green-bright">
+              🍽️ {t("table_label")} {lockedTableNumber}
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setCustomer((c) => ({ ...c, orderType: "pickup" }))}
+                className={`min-h-11 flex-1 rounded-lg border px-3 text-sm font-medium ${
+                  customer.orderType === "pickup"
+                    ? "border-brand-green-bright text-brand-green-bright"
+                    : "border-divider text-text-on-ink-dim"
+                }`}
+              >
+                {t("order_type_pickup")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomer((c) => ({ ...c, orderType: "delivery" }))}
+                className={`min-h-11 flex-1 rounded-lg border px-3 text-sm font-medium ${
+                  customer.orderType === "delivery"
+                    ? "border-brand-green-bright text-brand-green-bright"
+                    : "border-divider text-text-on-ink-dim"
+                }`}
+              >
+                {t("order_type_delivery")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomer((c) => ({ ...c, orderType: "dine_in" }))}
+                className={`min-h-11 flex-1 rounded-lg border px-3 text-sm font-medium ${
+                  customer.orderType === "dine_in"
+                    ? "border-brand-green-bright text-brand-green-bright"
+                    : "border-divider text-text-on-ink-dim"
+                }`}
+              >
+                {t("order_type_dine_in")}
+              </button>
+            </div>
+          )}
 
           <input
             type="text"
@@ -225,6 +245,16 @@ export default function PublicMenuView({
               value={customer.address}
               onChange={(e) => setCustomer((c) => ({ ...c, address: e.target.value }))}
               placeholder={t("checkout_address_ph")}
+              className="min-h-11 rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+            />
+          )}
+          {customer.orderType === "dine_in" && !lockedTableNumber && (
+            <input
+              type="text"
+              required
+              value={customer.tableNumber}
+              onChange={(e) => setCustomer((c) => ({ ...c, tableNumber: e.target.value }))}
+              placeholder={t("checkout_table_ph")}
               className="min-h-11 rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
             />
           )}

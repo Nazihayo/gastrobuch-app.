@@ -9,7 +9,7 @@ export default async function OrdersPage() {
   const { data: orders } = await supabase
     .from("orders")
     .select(
-      "id, customer_name, customer_phone, customer_address, order_type, status, notes, total_estimate, created_at, order_items(id, recipe_name, unit_price, quantity)"
+      "id, customer_name, customer_phone, customer_address, table_number, order_type, status, notes, total_estimate, created_at, order_items(id, recipe_name, unit_price, quantity)"
     )
     .eq("restaurant_id", restaurant.id)
     .order("created_at", { ascending: false })
@@ -20,6 +20,7 @@ export default async function OrdersPage() {
     customerName: o.customer_name,
     customerPhone: o.customer_phone,
     customerAddress: o.customer_address,
+    tableNumber: o.table_number,
     orderType: o.order_type,
     status: o.status,
     notes: o.notes,

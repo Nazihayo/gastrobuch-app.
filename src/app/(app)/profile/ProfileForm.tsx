@@ -20,6 +20,9 @@ export default function ProfileForm({
   datevMandantNr,
   loyaltyThreshold,
   loyaltyReward,
+  tableCount,
+  tableQrCodes,
+  hasMenuItems,
   menuUrl,
   menuQrDataUrl,
 }: {
@@ -37,6 +40,9 @@ export default function ProfileForm({
   datevMandantNr: string;
   loyaltyThreshold: number;
   loyaltyReward: string;
+  tableCount: number;
+  tableQrCodes: { number: number; qrDataUrl: string }[];
+  hasMenuItems: boolean;
   menuUrl: string;
   menuQrDataUrl: string | null;
 }) {
@@ -217,6 +223,48 @@ export default function ProfileForm({
           </>
         ) : (
           <p className="text-sm text-text-on-ink-dim">{t("profile_menu_empty")}</p>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-xl border border-divider bg-ink-soft p-5">
+        <div>
+          <h2 className="text-sm font-semibold">{t("profile_tables_title")}</h2>
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_tables_lead")}</p>
+        </div>
+        <Field label={t("profile_tables_count")}>
+          <input
+            type="number"
+            min={0}
+            max={200}
+            defaultValue={tableCount}
+            onBlur={(e) =>
+              commit({ tableCount: Math.max(0, Math.min(200, Number(e.target.value) || 0)) })
+            }
+            className="min-h-11 rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+          />
+        </Field>
+        {!hasMenuItems ? (
+          <p className="text-sm text-text-on-ink-dim">{t("profile_menu_empty")}</p>
+        ) : tableQrCodes.length === 0 ? (
+          <p className="text-sm text-text-on-ink-dim">{t("profile_tables_empty")}</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-3">
+            {tableQrCodes.map((tq) => (
+              <div key={tq.number} className="flex flex-col items-center gap-1">
+                {/* eslint-disable-next-line @next/next/no-img-element -- a locally generated data: URI, not a remote image Next's optimizer can process */}
+                <img
+                  src={tq.qrDataUrl}
+                  alt={`${t("table_label")} ${tq.number}`}
+                  width={90}
+                  height={90}
+                  className="rounded-lg bg-white p-1"
+                />
+                <span className="text-xs text-text-on-ink-dim">
+                  {t("table_label")} {tq.number}
+                </span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

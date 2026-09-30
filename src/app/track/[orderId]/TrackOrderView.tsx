@@ -35,6 +35,11 @@ export default function TrackOrderView({
       <div className="text-center">
         <h1 className="font-display text-2xl font-bold">{order.restaurantName}</h1>
         <p className="mt-1 text-sm text-text-on-ink-dim">{t("track_lead")}</p>
+        {order.orderType === "dine_in" && order.tableNumber && (
+          <p className="mt-1 text-xs text-text-on-ink-dim">
+            🍽️ {t("table_label")} {order.tableNumber}
+          </p>
+        )}
       </div>
 
       {isCancelled ? (

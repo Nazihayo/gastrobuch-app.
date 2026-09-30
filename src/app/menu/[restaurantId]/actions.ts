@@ -7,11 +7,17 @@ export type CustomerInfo = {
   name: string;
   phone: string;
   address: string;
-  orderType: "pickup" | "delivery";
+  tableNumber: string;
+  orderType: "pickup" | "delivery" | "dine_in";
   notes: string;
 };
 
-export type SubmitOrderError = "empty_cart" | "missing_info" | "missing_address" | "generic";
+export type SubmitOrderError =
+  | "empty_cart"
+  | "missing_info"
+  | "missing_address"
+  | "missing_table"
+  | "generic";
 export type LoyaltyProgress = {
   totalOrders: number;
   threshold: number;
@@ -39,6 +45,9 @@ export async function submitOrder(
   if (customer.orderType === "delivery" && !customer.address.trim()) {
     return { error: "missing_address" };
   }
+  if (customer.orderType === "dine_in" && !customer.tableNumber.trim()) {
+    return { error: "missing_table" };
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -50,6 +59,7 @@ export async function submitOrder(
       order_type: customer.orderType,
       notes: customer.notes.trim(),
       items: cart,
+      table_number: customer.tableNumber.trim(),
     })
     .single();
 

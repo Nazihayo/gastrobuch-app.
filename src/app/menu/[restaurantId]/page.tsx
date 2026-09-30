@@ -14,10 +14,13 @@ type MenuRow = {
 
 export default async function PublicMenuPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ restaurantId: string }>;
+  searchParams: Promise<{ table?: string }>;
 }) {
   const { restaurantId } = await params;
+  const { table } = await searchParams;
   const supabase = await createClient();
 
   const { data: rows, error } = await supabase.rpc("get_public_menu", {
@@ -42,6 +45,7 @@ export default async function PublicMenuPage({
       restaurantName={items[0].restaurant_name}
       country={items[0].restaurant_country}
       items={menuItems}
+      lockedTableNumber={table?.trim() || undefined}
     />
   );
 }
