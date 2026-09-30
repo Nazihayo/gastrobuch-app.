@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { COUNTRIES, type CountryCode } from "@/lib/countries";
 import { updateRestaurantProfile } from "./actions";
@@ -18,6 +18,8 @@ export default function ProfileForm({
   datevKontoBank,
   datevBeraterNr,
   datevMandantNr,
+  menuUrl,
+  menuQrDataUrl,
 }: {
   name: string;
   country: CountryCode;
@@ -31,10 +33,23 @@ export default function ProfileForm({
   datevKontoBank: string;
   datevBeraterNr: string;
   datevMandantNr: string;
+  menuUrl: string;
+  menuQrDataUrl: string | null;
 }) {
   const { t } = useLanguage();
   const [, startTransition] = useTransition();
+  const [copied, setCopied] = useState(false);
   const conf = COUNTRIES[country];
+
+  async function handleCopyLink() {
+    try {
+      await navigator.clipboard.writeText(menuUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard access can be denied by the browser; nothing to recover
+    }
+  }
 
   function commit(patch: Parameters<typeof updateRestaurantProfile>[0]) {
     startTransition(() => {
@@ -135,6 +150,44 @@ export default function ProfileForm({
           </Field>
         </div>
         <p className="text-xs text-brand-red">{t("profile_datev_disclaimer")}</p>
+      </div>
+
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-divider bg-ink-soft p-5 text-center">
+        <div>
+          <h2 className="text-sm font-semibold">{t("profile_menu_title")}</h2>
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_menu_lead")}</p>
+        </div>
+        {menuQrDataUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- a locally generated data: URI, not a remote image Next's optimizer can process */}
+            <img
+              src={menuQrDataUrl}
+              alt={t("profile_menu_title")}
+              width={180}
+              height={180}
+              className="rounded-lg bg-white p-2"
+            />
+            <div className="flex w-full gap-2">
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="min-h-11 flex-1 rounded-lg border border-divider px-3 text-sm font-semibold"
+              >
+                {copied ? t("profile_menu_copied") : t("profile_menu_copy")}
+              </button>
+              <a
+                href={menuUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-11 flex-1 items-center justify-center rounded-lg bg-brand-green-bright px-3 text-sm font-semibold text-[#0A1F16]"
+              >
+                {t("profile_menu_open")}
+              </a>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-text-on-ink-dim">{t("profile_menu_empty")}</p>
+        )}
       </div>
 
       <p className="text-center text-xs text-text-on-ink-dim">{t("profile_disclaimer")}</p>
