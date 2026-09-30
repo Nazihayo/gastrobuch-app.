@@ -4,6 +4,7 @@ import { dictionaries } from "@/lib/i18n/dictionaries";
 import { getCurrentRestaurant } from "@/lib/restaurant";
 
 const menuItems = [
+  { href: "/assistant", key: "more_assistant" as const },
   { href: "/orders", key: "more_orders" as const },
   { href: "/tables", key: "more_tables" as const },
   { href: "/customers", key: "more_customers" as const },
