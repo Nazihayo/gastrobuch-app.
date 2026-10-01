@@ -17,6 +17,7 @@ export async function updateRestaurantProfile(patch: {
   datevBeraterNr?: string;
   datevMandantNr?: string;
   tableCount?: number;
+  whatsappNumber?: string;
 }): Promise<void> {
   const { restaurant } = await getCurrentRestaurant();
   const supabase = await createClient();
@@ -35,6 +36,7 @@ export async function updateRestaurantProfile(patch: {
   if (patch.datevBeraterNr !== undefined) dbPatch.datev_berater_nr = patch.datevBeraterNr;
   if (patch.datevMandantNr !== undefined) dbPatch.datev_mandant_nr = patch.datevMandantNr;
   if (patch.tableCount !== undefined) dbPatch.table_count = patch.tableCount;
+  if (patch.whatsappNumber !== undefined) dbPatch.whatsapp_number = patch.whatsappNumber;
 
   await supabase.from("restaurants").update(dbPatch).eq("id", restaurant.id);
 

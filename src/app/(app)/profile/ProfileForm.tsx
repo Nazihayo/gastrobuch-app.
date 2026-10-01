@@ -28,6 +28,7 @@ export default function ProfileForm({
   datevKontoBank,
   datevBeraterNr,
   datevMandantNr,
+  whatsappNumber,
   loyaltyTiers,
   tableCount,
   tableQrCodes,
@@ -48,6 +49,7 @@ export default function ProfileForm({
   datevKontoBank: string;
   datevBeraterNr: string;
   datevMandantNr: string;
+  whatsappNumber: string;
   loyaltyTiers: LoyaltyTier[];
   tableCount: number;
   tableQrCodes: { number: number; qrDataUrl: string }[];
@@ -201,6 +203,15 @@ export default function ProfileForm({
             onCommit={(v) => commit({ taxId: v })}
           />
         </Field>
+        <Field label={t("profile_whatsapp_label")}>
+          <TextInput
+            type="tel"
+            defaultValue={whatsappNumber}
+            placeholder={t("profile_whatsapp_ph")}
+            onCommit={(v) => commit({ whatsappNumber: v })}
+          />
+        </Field>
+        <p className="text-xs text-text-on-ink-dim">{t("profile_whatsapp_hint")}</p>
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-divider bg-ink-soft p-5">

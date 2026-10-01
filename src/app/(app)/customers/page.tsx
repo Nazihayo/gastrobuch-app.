@@ -39,5 +39,11 @@ export default async function CustomersPage() {
     lastOrderAt: lastOrderByPhone.get(c.phone) ?? null,
   }));
 
-  return <CustomersList initialCustomers={initialCustomers} />;
+  return (
+    <CustomersList
+      initialCustomers={initialCustomers}
+      restaurantName={restaurant.name}
+      country={restaurant.country}
+    />
+  );
 }

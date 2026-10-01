@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { submitOrder, type CustomerInfo, type LoyaltyProgress } from "./actions";
 
 export type PublicMenuItem = {
@@ -18,6 +19,7 @@ export default function PublicMenuView({
   restaurantId,
   restaurantName,
   restaurantLogoUrl,
+  restaurantWhatsapp,
   country,
   items,
   lockedTableNumber,
@@ -25,6 +27,7 @@ export default function PublicMenuView({
   restaurantId: string;
   restaurantName: string;
   restaurantLogoUrl: string | null;
+  restaurantWhatsapp: string | null;
   country: CountryCode;
   items: PublicMenuItem[];
   lockedTableNumber?: string;
@@ -90,6 +93,20 @@ export default function PublicMenuView({
     setSuccess(true);
   }
 
+  function buildOrderWhatsAppMessage(): string {
+    const itemsText = cartLines.map((l) => `${l.quantity}x ${l.item.name}`).join("\n");
+    const typeText =
+      customer.orderType === "dine_in"
+        ? `${t("table_label")} ${customer.tableNumber}`
+        : customer.orderType === "delivery"
+          ? `${t("order_type_delivery")}: ${customer.address}`
+          : t("order_type_pickup");
+    return `${restaurantName}\n${customer.name}\n\n${itemsText}\n\n${t("cart_total")}: ${fmtMoney(
+      total,
+      country
+    )}\n${typeText}`;
+  }
+
   if (success) {
     return (
       <main className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center gap-4 px-4 py-10 text-center">
@@ -123,6 +140,16 @@ export default function PublicMenuView({
             className="mt-2 flex min-h-11 items-center justify-center rounded-lg border border-divider px-4 text-sm font-semibold"
           >
             {t("order_success_track_btn")}
+          </a>
+        )}
+        {restaurantWhatsapp && (
+          <a
+            href={buildWhatsAppLink(restaurantWhatsapp, country, buildOrderWhatsAppMessage())}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-11 items-center justify-center rounded-lg bg-[#25D366] px-4 text-sm font-semibold text-[#06140D]"
+          >
+            {t("order_whatsapp_btn")}
           </a>
         )}
       </main>

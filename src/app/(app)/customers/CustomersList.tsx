@@ -4,6 +4,8 @@ import { useCallback, useMemo, useState, useTransition } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { useUndoableRemove } from "@/lib/useUndoableRemove";
 import UndoToast from "@/components/UndoToast";
+import { type CountryCode } from "@/lib/countries";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { addCustomer, removeCustomer, updateCustomer, type Customer } from "./actions";
 
 const AT_RISK_DAYS = 30;
@@ -14,8 +16,12 @@ function daysSince(iso: string): number {
 
 export default function CustomersList({
   initialCustomers,
+  restaurantName,
+  country,
 }: {
   initialCustomers: Customer[];
+  restaurantName: string;
+  country: CountryCode;
 }) {
   const { t } = useLanguage();
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
@@ -107,6 +113,22 @@ export default function CustomersList({
                 <span className="shrink-0 rounded-full bg-ink-soft px-2 py-1 font-num text-[10px] text-text-on-ink-dim">
                   {c.totalOrders}× {t("cust_orders_badge")}
                 </span>
+              )}
+              {c.phone.trim() && (
+                <a
+                  href={buildWhatsAppLink(
+                    c.phone,
+                    country,
+                    t("cust_whatsapp_message")
+                      .replace("{name}", c.name || "")
+                      .replace("{restaurant}", restaurantName)
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-11 shrink-0 items-center justify-center rounded-lg bg-[#25D366] px-2.5 text-xs font-semibold text-[#06140D]"
+                >
+                  {t("cust_whatsapp_btn")}
+                </a>
               )}
               <button
                 type="button"
