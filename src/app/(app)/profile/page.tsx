@@ -11,7 +11,7 @@ export default async function ProfilePage() {
     supabase
       .from("restaurants")
       .select(
-        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, loyalty_threshold, loyalty_reward, table_count"
+        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, loyalty_threshold, loyalty_reward, table_count, logo_path"
       )
       .eq("id", restaurant.id)
       .single(),
@@ -27,6 +27,10 @@ export default async function ProfilePage() {
   const hasMenuItems = (menuItemCount ?? 0) > 0;
   const menuQrDataUrl = hasMenuItems ? await QRCode.toDataURL(menuUrl, { margin: 1 }) : null;
 
+  const logoUrl = data?.logo_path
+    ? supabase.storage.from("menu-photos").getPublicUrl(data.logo_path).data.publicUrl
+    : null;
+
   const tableCount = data?.table_count ?? 0;
   const tableQrCodes =
     hasMenuItems && tableCount > 0
@@ -41,6 +45,7 @@ export default async function ProfilePage() {
   return (
     <ProfileForm
       name={data?.name ?? restaurant.name}
+      logoUrl={logoUrl}
       country={restaurant.country}
       phone={data?.phone ?? ""}
       address={data?.address ?? ""}

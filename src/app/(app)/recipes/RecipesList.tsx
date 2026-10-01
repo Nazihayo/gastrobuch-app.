@@ -5,13 +5,16 @@ import { useLanguage } from "@/lib/i18n/context";
 import { COUNTRIES, fmtMoney, type CountryCode } from "@/lib/countries";
 import { useUndoableRemove } from "@/lib/useUndoableRemove";
 import UndoToast from "@/components/UndoToast";
+import { createClient } from "@/lib/supabase/client";
 import {
   addIngredient,
   addRecipe,
   removeIngredient,
   removeRecipe,
+  removeRecipePhoto,
   updateIngredient,
   updateRecipe,
+  uploadRecipePhoto,
   type Ingredient,
 } from "./actions";
 
@@ -20,6 +23,8 @@ type RecipeState = {
   name: string;
   price: number;
   deliveryCommissionPct: number;
+  photoPath: string | null;
+  photoUrl: string | null;
   ingredients: Ingredient[];
 };
 
@@ -39,7 +44,7 @@ export default function RecipesList({
 
   async function handleAddRecipe() {
     const created = await addRecipe();
-    if (created) setRecipes((prev) => [...prev, { ...created, ingredients: [] }]);
+    if (created) setRecipes((prev) => [...prev, { ...created, photoUrl: null, ingredients: [] }]);
   }
 
   const commitRemoveRecipe = useCallback(
@@ -72,6 +77,39 @@ export default function RecipesList({
   ) {
     startTransition(() => {
       updateRecipe(rid, patch);
+    });
+  }
+
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
+  async function handlePhotoChange(rid: string, file: File | undefined) {
+    if (!file) return;
+    setPhotoError(null);
+    const formData = new FormData();
+    formData.set("photo", file);
+    const result = await uploadRecipePhoto(rid, formData);
+    if (result.error) {
+      setPhotoError(
+        result.error === "too_large"
+          ? t("rec_photo_too_large")
+          : result.error === "not_image"
+            ? t("rec_photo_not_image")
+            : t("rec_photo_error")
+      );
+      return;
+    }
+    if (result.path) {
+      const supabase = createClient();
+      const photoUrl = supabase.storage.from("menu-photos").getPublicUrl(result.path).data
+        .publicUrl;
+      patchRecipeLocal(rid, { photoPath: result.path, photoUrl });
+    }
+  }
+
+  function handleRemovePhoto(rid: string) {
+    patchRecipeLocal(rid, { photoPath: null, photoUrl: null });
+    startTransition(() => {
+      removeRecipePhoto(rid);
     });
   }
 
@@ -191,6 +229,40 @@ export default function RecipesList({
               >
                 ✕
               </button>
+            </div>
+
+            <div className="mb-3 flex items-center gap-3">
+              {r.photoUrl ? (
+                <div className="relative shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- a public Supabase Storage URL, not something Next's optimizer can process */}
+                  <img
+                    src={r.photoUrl}
+                    alt={r.name || ""}
+                    width={64}
+                    height={64}
+                    className="h-16 w-16 rounded-lg object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePhoto(r.id)}
+                    aria-label="remove photo"
+                    className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-text-on-ink-dim hover:text-brand-red"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <label className="flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-dashed border-divider text-[10px] text-text-on-ink-dim hover:text-text-on-ink">
+                  📷 {t("rec_photo_add")}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handlePhotoChange(r.id, e.target.files?.[0])}
+                  />
+                </label>
+              )}
+              <p className="text-xs text-text-on-ink-dim">{t("rec_photo_hint")}</p>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -359,6 +431,8 @@ export default function RecipesList({
       >
         {t("rec_add")}
       </button>
+
+      {photoError && <p className="text-center text-sm text-brand-red">{photoError}</p>}
 
       <p className="text-center text-xs text-text-on-ink-dim">{t("rec_disclaimer")}</p>
 

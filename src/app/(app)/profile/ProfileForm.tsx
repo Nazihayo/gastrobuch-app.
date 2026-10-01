@@ -3,10 +3,12 @@
 import { useState, useTransition } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { COUNTRIES, type CountryCode } from "@/lib/countries";
-import { updateRestaurantProfile } from "./actions";
+import { createClient } from "@/lib/supabase/client";
+import { removeLogo, updateRestaurantProfile, uploadLogo } from "./actions";
 
 export default function ProfileForm({
   name,
+  logoUrl: initialLogoUrl,
   country,
   phone,
   address,
@@ -27,6 +29,7 @@ export default function ProfileForm({
   menuQrDataUrl,
 }: {
   name: string;
+  logoUrl: string | null;
   country: CountryCode;
   phone: string;
   address: string;
@@ -49,6 +52,8 @@ export default function ProfileForm({
   const { t } = useLanguage();
   const [, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
+  const [logoError, setLogoError] = useState<string | null>(null);
   const conf = COUNTRIES[country];
 
   async function handleCopyLink() {
@@ -67,6 +72,35 @@ export default function ProfileForm({
     });
   }
 
+  async function handleLogoChange(file: File | undefined) {
+    if (!file) return;
+    setLogoError(null);
+    const formData = new FormData();
+    formData.set("logo", file);
+    const result = await uploadLogo(formData);
+    if (result.error) {
+      setLogoError(
+        result.error === "too_large"
+          ? t("profile_logo_too_large")
+          : result.error === "not_image"
+            ? t("profile_logo_not_image")
+            : t("profile_logo_error")
+      );
+      return;
+    }
+    if (result.path) {
+      const supabase = createClient();
+      setLogoUrl(supabase.storage.from("menu-photos").getPublicUrl(result.path).data.publicUrl);
+    }
+  }
+
+  function handleRemoveLogo() {
+    setLogoUrl(null);
+    startTransition(() => {
+      removeLogo();
+    });
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -75,6 +109,41 @@ export default function ProfileForm({
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-divider bg-ink-soft p-5">
+        <div className="flex items-center gap-4">
+          {logoUrl ? (
+            <div className="relative shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element -- a public Supabase Storage URL, not something Next's optimizer can process */}
+              <img
+                src={logoUrl}
+                alt={name}
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-full border border-divider object-cover"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveLogo}
+                aria-label="remove logo"
+                className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-text-on-ink-dim hover:text-brand-red"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <label className="flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center rounded-full border border-dashed border-divider text-center text-[10px] text-text-on-ink-dim hover:text-text-on-ink">
+              📷 {t("profile_logo_add")}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleLogoChange(e.target.files?.[0])}
+              />
+            </label>
+          )}
+          <p className="text-xs text-text-on-ink-dim">{t("profile_logo_hint")}</p>
+        </div>
+        {logoError && <p className="text-xs text-brand-red">{logoError}</p>}
+
         <Field label={t("profile_name")}>
           <TextInput defaultValue={name} onCommit={(v) => commit({ name: v })} />
         </Field>

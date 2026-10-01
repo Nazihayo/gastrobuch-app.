@@ -10,7 +10,7 @@ export default async function RecipesPage() {
     supabase
       .from("recipes")
       .select(
-        "id, name, price, delivery_commission_pct, recipe_ingredients(id, name, cost, inventory_item_id, quantity_per_portion)"
+        "id, name, price, delivery_commission_pct, photo_path, recipe_ingredients(id, name, cost, inventory_item_id, quantity_per_portion)"
       )
       .eq("restaurant_id", restaurant.id)
       .order("created_at", { ascending: true }),
@@ -26,6 +26,10 @@ export default async function RecipesPage() {
     name: r.name,
     price: r.price,
     deliveryCommissionPct: r.delivery_commission_pct,
+    photoPath: r.photo_path,
+    photoUrl: r.photo_path
+      ? supabase.storage.from("menu-photos").getPublicUrl(r.photo_path).data.publicUrl
+      : null,
     ingredients: r.recipe_ingredients.map((ing) => ({
       id: ing.id,
       name: ing.name,

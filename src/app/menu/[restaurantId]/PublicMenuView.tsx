@@ -10,17 +10,20 @@ export type PublicMenuItem = {
   name: string;
   price: number;
   available: boolean;
+  photoUrl: string | null;
 };
 
 export default function PublicMenuView({
   restaurantId,
   restaurantName,
+  restaurantLogoUrl,
   country,
   items,
   lockedTableNumber,
 }: {
   restaurantId: string;
   restaurantName: string;
+  restaurantLogoUrl: string | null;
   country: CountryCode;
   items: PublicMenuItem[];
   lockedTableNumber?: string;
@@ -115,7 +118,17 @@ export default function PublicMenuView({
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col gap-6 px-4 py-10 pb-32">
-      <div className="text-center">
+      <div className="flex flex-col items-center text-center">
+        {restaurantLogoUrl && (
+          /* eslint-disable-next-line @next/next/no-img-element -- a public Supabase Storage URL, not something Next's optimizer can process */
+          <img
+            src={restaurantLogoUrl}
+            alt={restaurantName}
+            width={72}
+            height={72}
+            className="mb-3 h-16 w-16 rounded-full border border-divider object-cover"
+          />
+        )}
         <h1 className="font-display text-3xl font-bold">{restaurantName}</h1>
         <p className="mt-1 text-sm text-text-on-ink-dim">{t("public_menu_lead")}</p>
       </div>
@@ -130,6 +143,16 @@ export default function PublicMenuView({
                 item.available ? "border-divider bg-ink-soft" : "border-divider bg-ink-soft opacity-50"
               }`}
             >
+              {item.photoUrl && (
+                /* eslint-disable-next-line @next/next/no-img-element -- a public Supabase Storage URL, not something Next's optimizer can process */
+                <img
+                  src={item.photoUrl}
+                  alt={item.name || ""}
+                  width={56}
+                  height={56}
+                  className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                />
+              )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{item.name || "—"}</p>
                 <div className="flex items-center gap-2">

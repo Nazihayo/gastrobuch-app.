@@ -6,10 +6,12 @@ import PublicMenuView, { type PublicMenuItem } from "./PublicMenuView";
 type MenuRow = {
   restaurant_name: string;
   restaurant_country: CountryCode;
+  restaurant_logo_path: string | null;
   id: string;
   name: string;
   price: number;
   available: boolean;
+  photo_path: string | null;
 };
 
 export default async function PublicMenuPage({
@@ -32,17 +34,22 @@ export default async function PublicMenuPage({
   }
 
   const items = rows as MenuRow[];
+  const publicUrl = (path: string | null) =>
+    path ? supabase.storage.from("menu-photos").getPublicUrl(path).data.publicUrl : null;
+
   const menuItems: PublicMenuItem[] = items.map((i) => ({
     id: i.id,
     name: i.name,
     price: i.price,
     available: i.available,
+    photoUrl: publicUrl(i.photo_path),
   }));
 
   return (
     <PublicMenuView
       restaurantId={restaurantId}
       restaurantName={items[0].restaurant_name}
+      restaurantLogoUrl={publicUrl(items[0].restaurant_logo_path)}
       country={items[0].restaurant_country}
       items={menuItems}
       lockedTableNumber={table?.trim() || undefined}

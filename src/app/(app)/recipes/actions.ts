@@ -16,6 +16,7 @@ export type RecipeHeader = {
   name: string;
   price: number;
   deliveryCommissionPct: number;
+  photoPath: string | null;
 };
 
 export async function addRecipe(): Promise<RecipeHeader | null> {
@@ -25,7 +26,7 @@ export async function addRecipe(): Promise<RecipeHeader | null> {
   const { data, error } = await supabase
     .from("recipes")
     .insert({ restaurant_id: restaurant.id, name: "", price: 0, delivery_commission_pct: 30 })
-    .select("id, name, price, delivery_commission_pct")
+    .select("id, name, price, delivery_commission_pct, photo_path")
     .single();
 
   if (error || !data) return null;
@@ -43,6 +44,7 @@ export async function addRecipe(): Promise<RecipeHeader | null> {
     name: data.name,
     price: data.price,
     deliveryCommissionPct: data.delivery_commission_pct,
+    photoPath: data.photo_path,
   };
 }
 
@@ -137,6 +139,82 @@ export async function removeIngredient(id: string): Promise<void> {
     .from("recipe_ingredients")
     .delete()
     .eq("id", id)
+    .eq("restaurant_id", restaurant.id);
+
+  revalidatePath("/recipes");
+}
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+export type UploadPhotoState = { error?: string; path?: string };
+
+export async function uploadRecipePhoto(
+  recipeId: string,
+  formData: FormData
+): Promise<UploadPhotoState> {
+  const { restaurant } = await getCurrentRestaurant();
+  const supabase = await createClient();
+
+  const file = formData.get("photo");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "no_file" };
+  }
+  if (!file.type.startsWith("image/")) {
+    return { error: "not_image" };
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    return { error: "too_large" };
+  }
+
+  const { data: existing } = await supabase
+    .from("recipes")
+    .select("photo_path")
+    .eq("id", recipeId)
+    .eq("restaurant_id", restaurant.id)
+    .single();
+  if (existing?.photo_path) {
+    await supabase.storage.from("menu-photos").remove([existing.photo_path]);
+  }
+
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `${restaurant.id}/${recipeId}-${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("menu-photos")
+    .upload(path, file, { contentType: file.type });
+  if (uploadError) {
+    return { error: uploadError.message };
+  }
+
+  await supabase
+    .from("recipes")
+    .update({ photo_path: path })
+    .eq("id", recipeId)
+    .eq("restaurant_id", restaurant.id);
+
+  revalidatePath("/recipes");
+  return { path };
+}
+
+export async function removeRecipePhoto(recipeId: string): Promise<void> {
+  const { restaurant } = await getCurrentRestaurant();
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("recipes")
+    .select("photo_path")
+    .eq("id", recipeId)
+    .eq("restaurant_id", restaurant.id)
+    .single();
+
+  if (existing?.photo_path) {
+    await supabase.storage.from("menu-photos").remove([existing.photo_path]);
+  }
+
+  await supabase
+    .from("recipes")
+    .update({ photo_path: null })
+    .eq("id", recipeId)
     .eq("restaurant_id", restaurant.id);
 
   revalidatePath("/recipes");
