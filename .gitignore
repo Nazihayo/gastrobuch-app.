@@ -37,6 +37,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# scratch output from research/deep-research runs — not app source
+/research_notes/
+/reports/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
