@@ -25,9 +25,11 @@ export type SubmitOrderError =
   | "generic";
 export type LoyaltyProgress = {
   totalOrders: number;
-  threshold: number;
-  reward: string;
-  rewardEarned: boolean;
+  justReachedTierName: string | null;
+  justReachedTierReward: string | null;
+  nextTierName: string | null;
+  nextTierThreshold: number | null;
+  nextTierReward: string | null;
 };
 export type SubmitOrderState = {
   error?: SubmitOrderError;
@@ -75,12 +77,14 @@ export async function submitOrder(
   const row = data as {
     order_id: string;
     customer_total_orders: number;
-    loyalty_threshold: number;
-    loyalty_reward: string;
-    reward_earned: boolean;
+    just_reached_tier_name: string | null;
+    just_reached_tier_reward: string | null;
+    next_tier_name: string | null;
+    next_tier_threshold: number | null;
+    next_tier_reward: string | null;
   };
 
-  if (!row.loyalty_reward) {
+  if (!row.just_reached_tier_name && !row.next_tier_name) {
     return { success: true, orderId: row.order_id };
   }
 
@@ -89,9 +93,11 @@ export async function submitOrder(
     orderId: row.order_id,
     loyalty: {
       totalOrders: row.customer_total_orders,
-      threshold: row.loyalty_threshold,
-      reward: row.loyalty_reward,
-      rewardEarned: row.reward_earned,
+      justReachedTierName: row.just_reached_tier_name,
+      justReachedTierReward: row.just_reached_tier_reward,
+      nextTierName: row.next_tier_name,
+      nextTierThreshold: row.next_tier_threshold,
+      nextTierReward: row.next_tier_reward,
     },
   };
 }

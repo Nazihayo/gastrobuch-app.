@@ -97,16 +97,23 @@ export default function PublicMenuView({
         <h1 className="font-display text-2xl font-bold">{t("order_success_title")}</h1>
         <p className="text-sm text-text-on-ink-dim">{t("order_success_lead")}</p>
         {loyalty && (
-          <div className="mt-2 rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 px-4 py-3">
-            {loyalty.rewardEarned ? (
-              <p className="text-sm font-semibold text-brand-green-bright">
-                {t("loyalty_earned_prefix")} {loyalty.reward}
-              </p>
-            ) : (
-              <p className="text-sm text-text-on-ink-dim">
-                {t("loyalty_progress_prefix")} {loyalty.totalOrders}/{loyalty.threshold} ·{" "}
-                {t("loyalty_progress_suffix")} {loyalty.reward}
-              </p>
+          <div className="mt-2 flex flex-col gap-2">
+            {loyalty.justReachedTierName && (
+              <div className="rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 px-4 py-3">
+                <p className="text-sm font-semibold text-brand-green-bright">
+                  {t("loyalty_earned_prefix")} {loyalty.justReachedTierName} —{" "}
+                  {loyalty.justReachedTierReward}
+                </p>
+              </div>
+            )}
+            {loyalty.nextTierName && (
+              <div className="rounded-xl border border-divider bg-ink-soft px-4 py-3">
+                <p className="text-sm text-text-on-ink-dim">
+                  {t("loyalty_progress_prefix")} {loyalty.totalOrders}/{loyalty.nextTierThreshold}{" "}
+                  · {t("loyalty_progress_suffix")} {loyalty.nextTierName} —{" "}
+                  {loyalty.nextTierReward}
+                </p>
+              </div>
             )}
           </div>
         )}

@@ -7,11 +7,11 @@ export default async function ProfilePage() {
   const { restaurant } = await getCurrentRestaurant();
   const supabase = await createClient();
 
-  const [{ data }, { count: menuItemCount }] = await Promise.all([
+  const [{ data }, { count: menuItemCount }, { data: loyaltyTiers }] = await Promise.all([
     supabase
       .from("restaurants")
       .select(
-        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, loyalty_threshold, loyalty_reward, table_count, logo_path"
+        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, table_count, logo_path"
       )
       .eq("id", restaurant.id)
       .single(),
@@ -20,6 +20,11 @@ export default async function ProfilePage() {
       .select("id", { count: "exact", head: true })
       .eq("restaurant_id", restaurant.id)
       .gt("price", 0),
+    supabase
+      .from("loyalty_tiers")
+      .select("id, name, threshold, reward")
+      .eq("restaurant_id", restaurant.id)
+      .order("threshold", { ascending: true }),
   ]);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -57,8 +62,7 @@ export default async function ProfilePage() {
       datevKontoBank={data?.datev_konto_bank ?? ""}
       datevBeraterNr={data?.datev_berater_nr ?? ""}
       datevMandantNr={data?.datev_mandant_nr ?? ""}
-      loyaltyThreshold={data?.loyalty_threshold ?? 10}
-      loyaltyReward={data?.loyalty_reward ?? ""}
+      loyaltyTiers={loyaltyTiers ?? []}
       tableCount={tableCount}
       tableQrCodes={tableQrCodes}
       hasMenuItems={hasMenuItems}

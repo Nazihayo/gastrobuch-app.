@@ -16,8 +16,6 @@ export async function updateRestaurantProfile(patch: {
   datevKontoBank?: string;
   datevBeraterNr?: string;
   datevMandantNr?: string;
-  loyaltyThreshold?: number;
-  loyaltyReward?: string;
   tableCount?: number;
 }): Promise<void> {
   const { restaurant } = await getCurrentRestaurant();
@@ -36,8 +34,6 @@ export async function updateRestaurantProfile(patch: {
   if (patch.datevKontoBank !== undefined) dbPatch.datev_konto_bank = patch.datevKontoBank;
   if (patch.datevBeraterNr !== undefined) dbPatch.datev_berater_nr = patch.datevBeraterNr;
   if (patch.datevMandantNr !== undefined) dbPatch.datev_mandant_nr = patch.datevMandantNr;
-  if (patch.loyaltyThreshold !== undefined) dbPatch.loyalty_threshold = patch.loyaltyThreshold;
-  if (patch.loyaltyReward !== undefined) dbPatch.loyalty_reward = patch.loyaltyReward;
   if (patch.tableCount !== undefined) dbPatch.table_count = patch.tableCount;
 
   await supabase.from("restaurants").update(dbPatch).eq("id", restaurant.id);
@@ -108,4 +104,56 @@ export async function removeLogo(): Promise<void> {
   await supabase.from("restaurants").update({ logo_path: null }).eq("id", restaurant.id);
 
   revalidatePath("/", "layout");
+}
+
+export type LoyaltyTier = { id: string; name: string; threshold: number; reward: string };
+
+export async function addLoyaltyTier(): Promise<LoyaltyTier | null> {
+  const { restaurant } = await getCurrentRestaurant();
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("loyalty_tiers")
+    .select("threshold")
+    .eq("restaurant_id", restaurant.id)
+    .order("threshold", { ascending: false })
+    .limit(1);
+
+  const nextThreshold = (existing?.[0]?.threshold ?? 0) + 10;
+
+  const { data, error } = await supabase
+    .from("loyalty_tiers")
+    .insert({ restaurant_id: restaurant.id, name: "", threshold: nextThreshold, reward: "" })
+    .select("id, name, threshold, reward")
+    .single();
+
+  if (error || !data) return null;
+
+  revalidatePath("/profile");
+  return data;
+}
+
+export async function updateLoyaltyTier(
+  id: string,
+  patch: Partial<Pick<LoyaltyTier, "name" | "threshold" | "reward">>
+): Promise<void> {
+  const { restaurant } = await getCurrentRestaurant();
+  const supabase = await createClient();
+
+  await supabase
+    .from("loyalty_tiers")
+    .update(patch)
+    .eq("id", id)
+    .eq("restaurant_id", restaurant.id);
+
+  revalidatePath("/profile");
+}
+
+export async function removeLoyaltyTier(id: string): Promise<void> {
+  const { restaurant } = await getCurrentRestaurant();
+  const supabase = await createClient();
+
+  await supabase.from("loyalty_tiers").delete().eq("id", id).eq("restaurant_id", restaurant.id);
+
+  revalidatePath("/profile");
 }

@@ -4,7 +4,15 @@ import { useState, useTransition } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { COUNTRIES, type CountryCode } from "@/lib/countries";
 import { createClient } from "@/lib/supabase/client";
-import { removeLogo, updateRestaurantProfile, uploadLogo } from "./actions";
+import {
+  addLoyaltyTier,
+  removeLoyaltyTier,
+  removeLogo,
+  updateLoyaltyTier,
+  updateRestaurantProfile,
+  uploadLogo,
+  type LoyaltyTier,
+} from "./actions";
 
 export default function ProfileForm({
   name,
@@ -20,8 +28,7 @@ export default function ProfileForm({
   datevKontoBank,
   datevBeraterNr,
   datevMandantNr,
-  loyaltyThreshold,
-  loyaltyReward,
+  loyaltyTiers,
   tableCount,
   tableQrCodes,
   hasMenuItems,
@@ -41,8 +48,7 @@ export default function ProfileForm({
   datevKontoBank: string;
   datevBeraterNr: string;
   datevMandantNr: string;
-  loyaltyThreshold: number;
-  loyaltyReward: string;
+  loyaltyTiers: LoyaltyTier[];
   tableCount: number;
   tableQrCodes: { number: number; qrDataUrl: string }[];
   hasMenuItems: boolean;
@@ -54,6 +60,7 @@ export default function ProfileForm({
   const [copied, setCopied] = useState(false);
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const [logoError, setLogoError] = useState<string | null>(null);
+  const [tiers, setTiers] = useState(loyaltyTiers);
   const conf = COUNTRIES[country];
 
   async function handleCopyLink() {
@@ -98,6 +105,25 @@ export default function ProfileForm({
     setLogoUrl(null);
     startTransition(() => {
       removeLogo();
+    });
+  }
+
+  async function handleAddTier() {
+    const tier = await addLoyaltyTier();
+    if (tier) setTiers((prev) => [...prev, tier].sort((a, b) => a.threshold - b.threshold));
+  }
+
+  function handleTierChange(id: string, patch: Partial<Pick<LoyaltyTier, "name" | "threshold" | "reward">>) {
+    setTiers((prev) => prev.map((tr) => (tr.id === id ? { ...tr, ...patch } : tr)));
+    startTransition(() => {
+      updateLoyaltyTier(id, patch);
+    });
+  }
+
+  function handleRemoveTier(id: string) {
+    setTiers((prev) => prev.filter((tr) => tr.id !== id));
+    startTransition(() => {
+      removeLoyaltyTier(id);
     });
   }
 
@@ -236,25 +262,67 @@ export default function ProfileForm({
           <h2 className="text-sm font-semibold">{t("profile_loyalty_title")}</h2>
           <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_loyalty_lead")}</p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={t("profile_loyalty_threshold")}>
-            <input
-              type="number"
-              min={1}
-              defaultValue={loyaltyThreshold}
-              onBlur={(e) => commit({ loyaltyThreshold: Math.max(1, Number(e.target.value) || 1) })}
-              className="min-h-11 rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
-            />
-          </Field>
-          <Field label={t("profile_loyalty_reward")}>
-            <TextInput
-              defaultValue={loyaltyReward}
-              placeholder={t("profile_loyalty_reward_ph")}
-              onCommit={(v) => commit({ loyaltyReward: v })}
-            />
-          </Field>
-        </div>
-        <p className="text-xs text-text-on-ink-dim">{t("profile_loyalty_disabled_hint")}</p>
+        {tiers.length === 0 ? (
+          <p className="text-sm text-text-on-ink-dim">{t("profile_loyalty_empty")}</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {tiers.map((tier) => (
+              <div
+                key={tier.id}
+                className="flex flex-col gap-3 rounded-lg border border-divider bg-ink p-3"
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label={t("profile_loyalty_tier_name")}>
+                    <TextInput
+                      defaultValue={tier.name}
+                      placeholder={t("profile_loyalty_tier_name_ph")}
+                      onCommit={(v) => handleTierChange(tier.id, { name: v })}
+                    />
+                  </Field>
+                  <Field label={t("profile_loyalty_tier_threshold")}>
+                    <input
+                      type="number"
+                      min={1}
+                      defaultValue={tier.threshold}
+                      onBlur={(e) =>
+                        handleTierChange(tier.id, {
+                          threshold: Math.max(1, Number(e.target.value) || 1),
+                        })
+                      }
+                      className="min-h-11 rounded-lg border border-divider bg-ink-soft px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+                    />
+                  </Field>
+                </div>
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <Field label={t("profile_loyalty_reward")}>
+                      <TextInput
+                        defaultValue={tier.reward}
+                        placeholder={t("profile_loyalty_reward_ph")}
+                        onCommit={(v) => handleTierChange(tier.id, { reward: v })}
+                      />
+                    </Field>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTier(tier.id)}
+                    aria-label="remove tier"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-divider text-text-on-ink-dim hover:text-brand-red"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={handleAddTier}
+          className="min-h-11 rounded-lg border border-dashed border-divider text-sm font-semibold text-text-on-ink-dim hover:text-text-on-ink"
+        >
+          {t("profile_loyalty_add_tier")}
+        </button>
       </div>
 
       <div className="flex flex-col items-center gap-4 rounded-xl border border-divider bg-ink-soft p-5 text-center">
