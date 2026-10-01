@@ -3,6 +3,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentRestaurant } from "@/lib/restaurant";
+import { computeForecast } from "@/lib/forecast";
 
 export type ChatMessage = { role: "user" | "assistant"; text: string };
 export type AskAssistantResult = { reply: string } | { error: "not_configured" | "generic" };
@@ -56,6 +57,69 @@ const TOOLS: Anthropic.Tool[] = [
     description:
       "List inventory items whose remaining stock is below the amount needed — i.e. items that should be restocked soon.",
     input_schema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "update_recipe_price",
+    description: "Change the menu price of a dish, found by (partial, case-insensitive) name.",
+    input_schema: {
+      type: "object",
+      properties: {
+        dish_name: { type: "string", description: "The dish's name, or part of it." },
+        new_price: { type: "number", description: "The new gross (VAT-inclusive) price." },
+      },
+      required: ["dish_name", "new_price"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "restock_inventory_item",
+    description:
+      "Set an inventory item's remaining stock level, found by (partial, case-insensitive) name. Use this when the user says they've just restocked or received a delivery of something.",
+    input_schema: {
+      type: "object",
+      properties: {
+        item_name: { type: "string", description: "The inventory item's name, or part of it." },
+        new_remaining: { type: "number", description: "The new remaining quantity, in the item's existing unit." },
+      },
+      required: ["item_name", "new_remaining"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "add_fixed_cost",
+    description:
+      "Add a new recurring MONTHLY fixed cost (e.g. rent, electricity, insurance) — not a one-off purchase. Do not use this for a single variable/occasional expense.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "What the fixed cost is, e.g. 'Miete' (rent)." },
+        amount: { type: "number", description: "The monthly amount." },
+      },
+      required: ["name", "amount"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_forecast",
+    description:
+      "Get the forecasted revenue and top-selling dishes for the next 7 days, estimated from this restaurant's own historical sales on the same weekday.",
+    input_schema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "add_staff_shift",
+    description:
+      "Schedule a work shift for a staff member, found by (partial, case-insensitive) name.",
+    input_schema: {
+      type: "object",
+      properties: {
+        staff_name: { type: "string", description: "The staff member's name, or part of it." },
+        date: { type: "string", description: "The shift's date, as YYYY-MM-DD." },
+        start_time: { type: "string", description: "Start time, as HH:MM (24h)." },
+        end_time: { type: "string", description: "End time, as HH:MM (24h)." },
+      },
+      required: ["staff_name", "date", "start_time", "end_time"],
+      additionalProperties: false,
+    },
   },
 ];
 
@@ -151,6 +215,122 @@ async function runTool(
         .filter((i) => i.remaining < i.needed)
         .map((i) => ({ name: i.name, unit: i.unit, remaining: i.remaining, needed: i.needed }));
       return JSON.stringify(low);
+    }
+
+    case "update_recipe_price": {
+      const dishName = String(input.dish_name ?? "");
+      const newPrice = Number(input.new_price);
+      const { data: matches } = await supabase
+        .from("recipes")
+        .select("id, name")
+        .eq("restaurant_id", restaurantId)
+        .ilike("name", `%${dishName}%`);
+      if (!matches || matches.length === 0) {
+        return JSON.stringify({ error: `No dish found matching "${dishName}".` });
+      }
+      if (matches.length > 1) {
+        return JSON.stringify({
+          error: "Multiple dishes match — ask the user to be more specific.",
+          matches: matches.map((m) => m.name),
+        });
+      }
+      const { error } = await supabase
+        .from("recipes")
+        .update({ price: newPrice })
+        .eq("id", matches[0].id);
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true, dish: matches[0].name, new_price: newPrice });
+    }
+
+    case "restock_inventory_item": {
+      const itemName = String(input.item_name ?? "");
+      const newRemaining = Number(input.new_remaining);
+      const { data: matches } = await supabase
+        .from("inventory_items")
+        .select("id, name, unit")
+        .eq("restaurant_id", restaurantId)
+        .ilike("name", `%${itemName}%`);
+      if (!matches || matches.length === 0) {
+        return JSON.stringify({ error: `No inventory item found matching "${itemName}".` });
+      }
+      if (matches.length > 1) {
+        return JSON.stringify({
+          error: "Multiple inventory items match — ask the user to be more specific.",
+          matches: matches.map((m) => m.name),
+        });
+      }
+      const { error } = await supabase
+        .from("inventory_items")
+        .update({ remaining: newRemaining })
+        .eq("id", matches[0].id);
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({
+        success: true,
+        item: matches[0].name,
+        new_remaining: newRemaining,
+        unit: matches[0].unit,
+      });
+    }
+
+    case "add_fixed_cost": {
+      const { error } = await supabase.from("expenses").insert({
+        restaurant_id: restaurantId,
+        name: String(input.name ?? ""),
+        amount: Number(input.amount),
+      });
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true });
+    }
+
+    case "get_forecast": {
+      const [{ data: salesDays }, { data: recipes }] = await Promise.all([
+        supabase
+          .from("sales_days")
+          .select("date, food, drink, delivery, portions")
+          .eq("restaurant_id", restaurantId)
+          .order("date", { ascending: false })
+          .limit(180),
+        supabase.from("recipes").select("id, name").eq("restaurant_id", restaurantId),
+      ]);
+      const forecast = computeForecast(
+        (salesDays ?? []).map((d) => ({
+          date: d.date,
+          food: d.food,
+          drink: d.drink,
+          delivery: d.delivery,
+          portions: (d.portions as Record<string, number>) ?? {},
+        })),
+        recipes ?? [],
+        new Date()
+      );
+      return JSON.stringify(forecast);
+    }
+
+    case "add_staff_shift": {
+      const staffName = String(input.staff_name ?? "");
+      const { data: matches } = await supabase
+        .from("staff_members")
+        .select("id, name")
+        .eq("restaurant_id", restaurantId)
+        .ilike("name", `%${staffName}%`);
+      if (!matches || matches.length === 0) {
+        return JSON.stringify({ error: `No staff member found matching "${staffName}".` });
+      }
+      if (matches.length > 1) {
+        return JSON.stringify({
+          error: "Multiple staff members match — ask the user to be more specific.",
+          matches: matches.map((m) => m.name),
+        });
+      }
+      const { error } = await supabase.from("staff_shifts").insert({
+        restaurant_id: restaurantId,
+        staff_member_id: matches[0].id,
+        date: String(input.date ?? ""),
+        start_time: String(input.start_time ?? ""),
+        end_time: String(input.end_time ?? ""),
+      });
+      if (error) return JSON.stringify({ error: error.message });
+      return JSON.stringify({ success: true, staff: matches[0].name });
     }
 
     default:
