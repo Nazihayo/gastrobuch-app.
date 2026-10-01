@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import LanguageToggle from "@/components/LanguageToggle";
 import { submitOrder, type CustomerInfo, type LoyaltyProgress } from "./actions";
 
 export type PublicMenuItem = {
@@ -158,6 +159,9 @@ export default function PublicMenuView({
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col gap-6 px-4 py-10 pb-32">
+      <div className="flex justify-end">
+        <LanguageToggle />
+      </div>
       <div className="flex flex-col items-center text-center">
         {restaurantLogoUrl && (
           /* eslint-disable-next-line @next/next/no-img-element -- a public Supabase Storage URL, not something Next's optimizer can process */
