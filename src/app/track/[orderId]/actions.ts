@@ -13,6 +13,7 @@ export type PublicOrderStatus = {
   restaurantName: string;
   restaurantCountry: CountryCode;
   tableSessionTotal: number | null;
+  alreadyReviewed: boolean;
 };
 
 export async function getOrderStatus(orderId: string): Promise<PublicOrderStatus | null> {
@@ -32,6 +33,7 @@ export async function getOrderStatus(orderId: string): Promise<PublicOrderStatus
     restaurant_name: string;
     restaurant_country: CountryCode;
     table_session_total: number | null;
+    already_reviewed: boolean;
   };
 
   return {
@@ -43,5 +45,24 @@ export async function getOrderStatus(orderId: string): Promise<PublicOrderStatus
     restaurantName: row.restaurant_name,
     restaurantCountry: row.restaurant_country,
     tableSessionTotal: row.table_session_total,
+    alreadyReviewed: row.already_reviewed,
   };
+}
+
+export type SubmitReviewResult = { success: true } | { error: string };
+
+export async function submitReview(
+  orderId: string,
+  rating: number,
+  comment: string
+): Promise<SubmitReviewResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("submit_review", {
+    target_order_id: orderId,
+    p_rating: rating,
+    p_comment: comment.trim(),
+  });
+
+  if (error) return { error: error.message };
+  return { success: true };
 }

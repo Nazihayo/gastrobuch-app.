@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney } from "@/lib/countries";
-import { getOrderStatus, type PublicOrderStatus } from "./actions";
+import { getOrderStatus, submitReview, type PublicOrderStatus } from "./actions";
 import type { OrderStatus } from "@/app/(app)/orders/actions";
 
 const STEPS: OrderStatus[] = ["new", "confirmed", "preparing", "ready", "completed"];
@@ -18,6 +18,10 @@ export default function TrackOrderView({
 }) {
   const { t, locale } = useLanguage();
   const [order, setOrder] = useState(initialOrder);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -29,6 +33,19 @@ export default function TrackOrderView({
 
   const stepIndex = STEPS.indexOf(order.status);
   const isCancelled = order.status === "cancelled";
+
+  async function handleSubmitReview() {
+    if (rating === 0) return;
+    setSubmitting(true);
+    setReviewError(null);
+    const result = await submitReview(orderId, rating, comment);
+    setSubmitting(false);
+    if ("error" in result) {
+      setReviewError(t("review_submit_error"));
+      return;
+    }
+    setOrder((prev) => ({ ...prev, alreadyReviewed: true }));
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col gap-6 px-4 py-10">
@@ -99,6 +116,49 @@ export default function TrackOrderView({
             </span>
           </p>
           <p className="mt-1 text-xs text-text-on-ink-dim">{t("track_table_total_hint")}</p>
+        </div>
+      )}
+
+      {order.status === "completed" && (
+        <div className="rounded-xl border border-divider bg-ink-soft p-5 text-center">
+          {order.alreadyReviewed ? (
+            <p className="text-sm text-brand-green-bright">{t("review_thanks")}</p>
+          ) : (
+            <>
+              <p className="mb-3 text-sm font-semibold">{t("review_prompt")}</p>
+              <div className="mb-3 flex justify-center gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setRating(n)}
+                    aria-label={`${n} stars`}
+                    className={`flex h-11 w-11 items-center justify-center text-2xl ${
+                      n <= rating ? "text-brand-green-bright" : "text-text-on-ink-dim opacity-40"
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={t("review_comment_ph")}
+                rows={3}
+                className="mb-3 w-full rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+              />
+              {reviewError && <p className="mb-2 text-xs text-brand-red">{reviewError}</p>}
+              <button
+                type="button"
+                onClick={handleSubmitReview}
+                disabled={rating === 0 || submitting}
+                className="min-h-11 w-full rounded-lg bg-brand-green-bright px-4 py-3 text-sm font-bold text-[#0A1F16] disabled:opacity-50"
+              >
+                {submitting ? "…" : t("review_submit_btn")}
+              </button>
+            </>
+          )}
         </div>
       )}
 
