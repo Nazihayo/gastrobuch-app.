@@ -18,6 +18,7 @@ export type RecipeHeader = {
   deliveryCommissionPct: number;
   photoPath: string | null;
   category: "food" | "drink";
+  dietTag: "vegan" | "vegetarian" | null;
 };
 
 export async function addRecipe(): Promise<RecipeHeader | null> {
@@ -27,7 +28,7 @@ export async function addRecipe(): Promise<RecipeHeader | null> {
   const { data, error } = await supabase
     .from("recipes")
     .insert({ restaurant_id: restaurant.id, name: "", price: 0, delivery_commission_pct: 30 })
-    .select("id, name, price, delivery_commission_pct, photo_path, category")
+    .select("id, name, price, delivery_commission_pct, photo_path, category, diet_tag")
     .single();
 
   if (error || !data) return null;
@@ -47,6 +48,7 @@ export async function addRecipe(): Promise<RecipeHeader | null> {
     deliveryCommissionPct: data.delivery_commission_pct,
     photoPath: data.photo_path,
     category: data.category,
+    dietTag: data.diet_tag,
   };
 }
 
@@ -57,6 +59,7 @@ export async function updateRecipe(
     price: number;
     deliveryCommissionPct: number;
     category: "food" | "drink";
+    dietTag: "vegan" | "vegetarian" | null;
   }>
 ): Promise<void> {
   const { restaurant } = await getCurrentRestaurant();
@@ -68,6 +71,7 @@ export async function updateRecipe(
   if (patch.deliveryCommissionPct !== undefined)
     dbPatch.delivery_commission_pct = patch.deliveryCommissionPct;
   if (patch.category !== undefined) dbPatch.category = patch.category;
+  if (patch.dietTag !== undefined) dbPatch.diet_tag = patch.dietTag;
 
   await supabase.from("recipes").update(dbPatch).eq("id", id).eq("restaurant_id", restaurant.id);
   revalidatePath("/recipes");

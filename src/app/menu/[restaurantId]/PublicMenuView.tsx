@@ -14,6 +14,7 @@ export type PublicMenuItem = {
   available: boolean;
   photoUrl: string | null;
   category: "food" | "drink";
+  dietTag: "vegan" | "vegetarian" | null;
 };
 
 export default function PublicMenuView({
@@ -48,6 +49,10 @@ export default function PublicMenuView({
   const [success, setSuccess] = useState(false);
   const [loyalty, setLoyalty] = useState<LoyaltyProgress | undefined>(undefined);
   const [orderId, setOrderId] = useState<string | undefined>(undefined);
+  const [plantBasedOnly, setPlantBasedOnly] = useState(false);
+
+  const hasPlantBasedItems = items.some((i) => i.dietTag !== null);
+  const visibleItems = plantBasedOnly ? items.filter((i) => i.dietTag !== null) : items;
 
   function setQty(id: string, qty: number) {
     setCart((prev) => {
@@ -177,8 +182,22 @@ export default function PublicMenuView({
         <p className="mt-1 text-sm text-text-on-ink-dim">{t("public_menu_lead")}</p>
       </div>
 
+      {hasPlantBasedItems && (
+        <button
+          type="button"
+          onClick={() => setPlantBasedOnly((v) => !v)}
+          className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-medium ${
+            plantBasedOnly
+              ? "border-brand-green-bright text-brand-green-bright"
+              : "border-divider text-text-on-ink-dim"
+          }`}
+        >
+          🌱 {t("public_menu_plant_based_filter")}
+        </button>
+      )}
+
       <div className="flex flex-col gap-2.5">
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           const qty = cart[item.id] ?? 0;
           return (
             <div
@@ -198,7 +217,10 @@ export default function PublicMenuView({
                 />
               )}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{item.name || "—"}</p>
+                <p className="truncate text-sm font-medium">
+                  {item.dietTag === "vegan" ? "🌱 " : item.dietTag === "vegetarian" ? "🥦 " : ""}
+                  {item.name || "—"}
+                </p>
                 <div className="flex items-center gap-2">
                   {!item.available && (
                     <span className="text-xs font-semibold text-brand-red">

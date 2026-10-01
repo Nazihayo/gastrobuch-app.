@@ -14,6 +14,7 @@ type MenuRow = {
   available: boolean;
   photo_path: string | null;
   category: "food" | "drink";
+  diet_tag: "vegan" | "vegetarian" | null;
 };
 
 export default async function PublicMenuPage({
@@ -46,6 +47,7 @@ export default async function PublicMenuPage({
     available: i.available,
     photoUrl: publicUrl(i.photo_path),
     category: i.category,
+    dietTag: i.diet_tag,
   }));
 
   return (

@@ -26,6 +26,7 @@ type RecipeState = {
   photoPath: string | null;
   photoUrl: string | null;
   category: "food" | "drink";
+  dietTag: "vegan" | "vegetarian" | null;
   ingredients: Ingredient[];
 };
 
@@ -74,7 +75,9 @@ export default function RecipesList({
 
   function commitRecipe(
     rid: string,
-    patch: Partial<Pick<RecipeState, "name" | "price" | "deliveryCommissionPct" | "category">>
+    patch: Partial<
+      Pick<RecipeState, "name" | "price" | "deliveryCommissionPct" | "category" | "dietTag">
+    >
   ) {
     startTransition(() => {
       updateRecipe(rid, patch);
@@ -293,6 +296,50 @@ export default function RecipesList({
                     }`}
                   >
                     🥤 {t("rec_category_drink")}
+                  </button>
+                </div>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchRecipeLocal(r.id, { dietTag: null });
+                      commitRecipe(r.id, { dietTag: null });
+                    }}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-medium ${
+                      r.dietTag === null
+                        ? "border-brand-green-bright text-brand-green-bright"
+                        : "border-divider text-text-on-ink-dim"
+                    }`}
+                  >
+                    {t("rec_diet_none")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchRecipeLocal(r.id, { dietTag: "vegetarian" });
+                      commitRecipe(r.id, { dietTag: "vegetarian" });
+                    }}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-medium ${
+                      r.dietTag === "vegetarian"
+                        ? "border-brand-green-bright text-brand-green-bright"
+                        : "border-divider text-text-on-ink-dim"
+                    }`}
+                  >
+                    🥦 {t("rec_diet_vegetarian")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchRecipeLocal(r.id, { dietTag: "vegan" });
+                      commitRecipe(r.id, { dietTag: "vegan" });
+                    }}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-medium ${
+                      r.dietTag === "vegan"
+                        ? "border-brand-green-bright text-brand-green-bright"
+                        : "border-divider text-text-on-ink-dim"
+                    }`}
+                  >
+                    🌱 {t("rec_diet_vegan")}
                   </button>
                 </div>
               </div>
