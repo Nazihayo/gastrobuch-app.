@@ -14,6 +14,7 @@ const menuItems = [
   { href: "/activity", key: "more_activity" as const },
   { href: "/settings", key: "more_settings" as const },
   { href: "/schedule", key: "more_schedule" as const },
+  { href: "/tips", key: "more_tips" as const },
   { href: "/expenses", key: "more_expenses" as const },
   { href: "/breakeven", key: "more_breakeven" as const },
   { href: "/recipes", key: "more_recipes" as const },

@@ -60,20 +60,20 @@ function row(
   ].join(";");
 }
 
-export function buildDatevExport(
-  days: DatevDay[],
-  wages: number,
-  expenses: number,
-  config: DatevConfig,
-  periodStart: string,
-  periodEndExclusive: string
-): string {
+function periodEndDate(periodEndExclusive: string): string {
   // monthRange() gives an exclusive end (first day of next month); the
-  // booking date for the aggregate wages/expenses lines should be the
-  // actual last day of the period.
+  // booking date for an aggregate line should be the actual last day of
+  // the period.
   const periodEnd = new Date(periodEndExclusive + "T00:00:00Z");
   periodEnd.setUTCDate(periodEnd.getUTCDate() - 1);
-  const periodEndStr = periodEnd.toISOString().slice(0, 10);
+  return periodEnd.toISOString().slice(0, 10);
+}
+
+function buildExtfHeaders(
+  config: DatevConfig,
+  periodStart: string,
+  periodEndStr: string
+): [string, string] {
   const now = new Date();
   const createdAt =
     `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}` +
@@ -121,6 +121,20 @@ export function buildDatevExport(
     .map(csvField)
     .join(";");
 
+  return [header1, header2];
+}
+
+export function buildDatevExport(
+  days: DatevDay[],
+  wages: number,
+  expenses: number,
+  config: DatevConfig,
+  periodStart: string,
+  periodEndExclusive: string
+): string {
+  const periodEndStr = periodEndDate(periodEndExclusive);
+  const [header1, header2] = buildExtfHeaders(config, periodStart, periodEndStr);
+
   const rows: string[] = [];
   for (const day of days) {
     if (day.food > 0) {
@@ -142,4 +156,27 @@ export function buildDatevExport(
 
 export function datevFilename(periodStart: string): string {
   return `gastrobuch-datev-${periodStart.slice(0, 7)}.csv`;
+}
+
+// A tip pool is booked as its own single-line EXTF file, separate from the
+// monthly wages export, since a Trinkgeld payout isn't necessarily run
+// through the same payroll booking (check with a Steuerberater — tips paid
+// directly by guests are tax-free under §3 Nr. 51 EStG, but how a pooled
+// and employer-redistributed amount is booked can differ).
+export function buildTipPoolDatevExport(
+  totalAmount: number,
+  config: DatevConfig,
+  periodStart: string,
+  periodEnd: string
+): string {
+  const [header1, header2] = buildExtfHeaders(config, periodStart, periodEnd);
+
+  const rows: string[] = [];
+  if (totalAmount > 0) {
+    rows.push(
+      row(totalAmount, "H", config.konto_bank, config.konto_wages, ddmm(periodEnd), "Trinkgeld-Verteilung")
+    );
+  }
+
+  return "﻿" + [header1, header2, ...rows].join("\r\n");
 }

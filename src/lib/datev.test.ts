@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDatevExport, datevFilename, type DatevConfig } from "./datev";
+import { buildDatevExport, buildTipPoolDatevExport, datevFilename, type DatevConfig } from "./datev";
 
 const config: DatevConfig = {
   konto_food: "8300",
@@ -64,6 +64,19 @@ describe("buildDatevExport", () => {
       "2026-10-01"
     );
     expect(csv.split("\r\n")).toHaveLength(2); // just the two header rows
+  });
+});
+
+describe("buildTipPoolDatevExport", () => {
+  it("books the tip pool total on the Haben side against the booking's own period end", () => {
+    const csv = buildTipPoolDatevExport(240, config, "2026-09-01", "2026-09-15");
+    const rows = csv.split("\r\n").slice(2);
+    expect(rows).toEqual(['240,00;H;EUR;;;;1000;4120;;1509;;;;"Trinkgeld-Verteilung"']);
+  });
+
+  it("omits the row when the total is zero", () => {
+    const csv = buildTipPoolDatevExport(0, config, "2026-09-01", "2026-09-15");
+    expect(csv.split("\r\n")).toHaveLength(2);
   });
 });
 
