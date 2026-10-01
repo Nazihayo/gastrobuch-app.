@@ -12,6 +12,7 @@ type MenuRow = {
   price: number;
   available: boolean;
   photo_path: string | null;
+  category: "food" | "drink";
 };
 
 export default async function PublicMenuPage({
@@ -43,6 +44,7 @@ export default async function PublicMenuPage({
     price: i.price,
     available: i.available,
     photoUrl: publicUrl(i.photo_path),
+    category: i.category,
   }));
 
   return (

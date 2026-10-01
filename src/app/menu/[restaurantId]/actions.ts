@@ -2,7 +2,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-export type CartItem = { name: string; price: number; quantity: number };
+export type CartItem = {
+  name: string;
+  price: number;
+  quantity: number;
+  category: "food" | "drink";
+};
 export type CustomerInfo = {
   name: string;
   phone: string;

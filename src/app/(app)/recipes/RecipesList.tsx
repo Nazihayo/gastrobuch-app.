@@ -25,6 +25,7 @@ type RecipeState = {
   deliveryCommissionPct: number;
   photoPath: string | null;
   photoUrl: string | null;
+  category: "food" | "drink";
   ingredients: Ingredient[];
 };
 
@@ -73,7 +74,7 @@ export default function RecipesList({
 
   function commitRecipe(
     rid: string,
-    patch: Partial<Pick<RecipeState, "name" | "price" | "deliveryCommissionPct">>
+    patch: Partial<Pick<RecipeState, "name" | "price" | "deliveryCommissionPct" | "category">>
   ) {
     startTransition(() => {
       updateRecipe(rid, patch);
@@ -262,7 +263,39 @@ export default function RecipesList({
                   />
                 </label>
               )}
-              <p className="text-xs text-text-on-ink-dim">{t("rec_photo_hint")}</p>
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <p className="text-xs text-text-on-ink-dim">{t("rec_photo_hint")}</p>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchRecipeLocal(r.id, { category: "food" });
+                      commitRecipe(r.id, { category: "food" });
+                    }}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-medium ${
+                      r.category === "food"
+                        ? "border-brand-green-bright text-brand-green-bright"
+                        : "border-divider text-text-on-ink-dim"
+                    }`}
+                  >
+                    🍔 {t("rec_category_food")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchRecipeLocal(r.id, { category: "drink" });
+                      commitRecipe(r.id, { category: "drink" });
+                    }}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-medium ${
+                      r.category === "drink"
+                        ? "border-brand-green-bright text-brand-green-bright"
+                        : "border-divider text-text-on-ink-dim"
+                    }`}
+                  >
+                    🥤 {t("rec_category_drink")}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-col gap-2">

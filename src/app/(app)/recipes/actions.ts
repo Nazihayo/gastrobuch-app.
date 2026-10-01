@@ -17,6 +17,7 @@ export type RecipeHeader = {
   price: number;
   deliveryCommissionPct: number;
   photoPath: string | null;
+  category: "food" | "drink";
 };
 
 export async function addRecipe(): Promise<RecipeHeader | null> {
@@ -26,7 +27,7 @@ export async function addRecipe(): Promise<RecipeHeader | null> {
   const { data, error } = await supabase
     .from("recipes")
     .insert({ restaurant_id: restaurant.id, name: "", price: 0, delivery_commission_pct: 30 })
-    .select("id, name, price, delivery_commission_pct, photo_path")
+    .select("id, name, price, delivery_commission_pct, photo_path, category")
     .single();
 
   if (error || !data) return null;
@@ -45,12 +46,18 @@ export async function addRecipe(): Promise<RecipeHeader | null> {
     price: data.price,
     deliveryCommissionPct: data.delivery_commission_pct,
     photoPath: data.photo_path,
+    category: data.category,
   };
 }
 
 export async function updateRecipe(
   id: string,
-  patch: Partial<{ name: string; price: number; deliveryCommissionPct: number }>
+  patch: Partial<{
+    name: string;
+    price: number;
+    deliveryCommissionPct: number;
+    category: "food" | "drink";
+  }>
 ): Promise<void> {
   const { restaurant } = await getCurrentRestaurant();
   const supabase = await createClient();
@@ -60,6 +67,7 @@ export async function updateRecipe(
   if (patch.price !== undefined) dbPatch.price = patch.price;
   if (patch.deliveryCommissionPct !== undefined)
     dbPatch.delivery_commission_pct = patch.deliveryCommissionPct;
+  if (patch.category !== undefined) dbPatch.category = patch.category;
 
   await supabase.from("recipes").update(dbPatch).eq("id", id).eq("restaurant_id", restaurant.id);
   revalidatePath("/recipes");

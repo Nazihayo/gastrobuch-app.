@@ -7,6 +7,7 @@ const menuItems = [
   { href: "/assistant", key: "more_assistant" as const },
   { href: "/orders", key: "more_orders" as const },
   { href: "/tables", key: "more_tables" as const },
+  { href: "/receipts", key: "more_receipts" as const },
   { href: "/customers", key: "more_customers" as const },
   { href: "/cashbook", key: "more_cashbook" as const },
   { href: "/activity", key: "more_activity" as const },

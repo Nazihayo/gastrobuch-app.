@@ -11,6 +11,7 @@ export type PublicMenuItem = {
   price: number;
   available: boolean;
   photoUrl: string | null;
+  category: "food" | "drink";
 };
 
 export default function PublicMenuView({
@@ -71,7 +72,12 @@ export default function PublicMenuView({
     setPending(true);
     const result = await submitOrder(
       restaurantId,
-      cartLines.map((l) => ({ name: l.item.name, price: l.item.price, quantity: l.quantity })),
+      cartLines.map((l) => ({
+        name: l.item.name,
+        price: l.item.price,
+        quantity: l.quantity,
+        category: l.item.category,
+      })),
       customer
     );
     setPending(false);

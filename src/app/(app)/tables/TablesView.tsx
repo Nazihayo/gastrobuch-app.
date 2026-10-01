@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
-import { closeTableSession } from "./actions";
+import { closeTableSession, type PaymentMethod } from "./actions";
 
 export type TableSession = {
   id: string;
@@ -21,13 +22,17 @@ export default function TablesView({
   initialSessions: TableSession[];
 }) {
   const { t, locale } = useLanguage();
+  const router = useRouter();
   const [sessions, setSessions] = useState(initialSessions);
   const [, startTransition] = useTransition();
 
-  function close(session: TableSession) {
+  function close(session: TableSession, method: PaymentMethod) {
     setSessions((prev) => prev.filter((s) => s.id !== session.id));
-    startTransition(() => {
-      closeTableSession(session.id, session.tableNumber);
+    startTransition(async () => {
+      const result = await closeTableSession(session.id, session.tableNumber, method);
+      if (result.receiptId) {
+        router.push(`/receipts/${result.receiptId}`);
+      }
     });
   }
 
@@ -60,13 +65,23 @@ export default function TablesView({
                 minute: "2-digit",
               })}
             </p>
-            <button
-              type="button"
-              onClick={() => close(s)}
-              className="mt-3 min-h-11 w-full rounded-lg bg-brand-green-bright px-3 text-sm font-semibold text-[#0A1F16]"
-            >
-              {t("tables_close_btn")}
-            </button>
+            <p className="mt-3 text-xs text-text-on-ink-dim">{t("tables_close_btn")}</p>
+            <div className="mt-1 flex gap-2">
+              <button
+                type="button"
+                onClick={() => close(s, "cash")}
+                className="min-h-11 flex-1 rounded-lg bg-brand-green-bright px-3 text-sm font-semibold text-[#0A1F16]"
+              >
+                💵 {t("payment_cash")}
+              </button>
+              <button
+                type="button"
+                onClick={() => close(s, "card")}
+                className="min-h-11 flex-1 rounded-lg border border-brand-green-bright px-3 text-sm font-semibold text-brand-green-bright"
+              >
+                💳 {t("payment_card")}
+              </button>
+            </div>
           </div>
         ))}
       </div>
