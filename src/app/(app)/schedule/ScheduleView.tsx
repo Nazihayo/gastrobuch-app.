@@ -4,6 +4,14 @@ import { useActionState, useCallback, useMemo, useState, useTransition } from "r
 import { useLanguage } from "@/lib/i18n/context";
 import { useUndoableRemove } from "@/lib/useUndoableRemove";
 import UndoToast from "@/components/UndoToast";
+import { fmtMoney, type CountryCode } from "@/lib/countries";
+import type { ForecastDayResult } from "@/lib/forecast";
+import {
+  detectLongShifts,
+  detectMissingRestDay,
+  detectShortRestPeriods,
+  type MinijobCapFinding,
+} from "@/lib/scheduleCompliance";
 import { addShift, removeShift, type AddShiftState, type Shift } from "./actions";
 
 const initialState: AddShiftState = {};
@@ -22,10 +30,16 @@ export default function ScheduleView({
   weekStart,
   staff,
   shifts: initialShifts,
+  forecast,
+  minijobFindings,
+  country,
 }: {
   weekStart: string;
   staff: { id: string; name: string }[];
   shifts: Shift[];
+  forecast: ForecastDayResult[];
+  minijobFindings: MinijobCapFinding[];
+  country: CountryCode;
 }) {
   const { t } = useLanguage();
   const [shifts, setShifts] = useState(initialShifts);
@@ -63,6 +77,28 @@ export default function ScheduleView({
     () => shifts.filter((s) => s.id !== pendingRemoval?.id),
     [shifts, pendingRemoval]
   );
+
+  const complianceInput = useMemo(
+    () =>
+      visibleShifts.map((s) => ({
+        staffMemberId: s.staffMemberId,
+        staffName: s.staffName,
+        date: s.date,
+        startTime: s.startTime,
+        endTime: s.endTime,
+      })),
+    [visibleShifts]
+  );
+  const longShifts = useMemo(() => detectLongShifts(complianceInput), [complianceInput]);
+  const shortRests = useMemo(() => detectShortRestPeriods(complianceInput), [complianceInput]);
+  const missingRestDays = useMemo(() => detectMissingRestDay(complianceInput), [complianceInput]);
+  const hasComplianceWarnings =
+    longShifts.length > 0 ||
+    shortRests.length > 0 ||
+    missingRestDays.length > 0 ||
+    minijobFindings.length > 0;
+
+  const forecastByDate = useMemo(() => new Map(forecast.map((f) => [f.date, f])), [forecast]);
 
   if (staff.length === 0) {
     return (
@@ -130,14 +166,54 @@ export default function ScheduleView({
         </button>
       </form>
 
+      {hasComplianceWarnings && (
+        <div className="flex flex-col gap-2 rounded-xl border border-brand-red/40 bg-brand-red/10 p-4">
+          <h3 className="text-sm font-semibold text-brand-red">{t("sched_compliance_title")}</h3>
+          {longShifts.map((f, i) => (
+            <p key={`long-${i}`} className="text-xs">
+              ⚠️ {f.staffName} · {f.date} — {t("sched_compliance_long_shift").replace("{hours}", String(f.hours))}
+            </p>
+          ))}
+          {shortRests.map((f, i) => (
+            <p key={`rest-${i}`} className="text-xs">
+              ⚠️ {f.staffName} · {f.previousDate} → {f.date} —{" "}
+              {t("sched_compliance_short_rest").replace("{hours}", String(f.restHours))}
+            </p>
+          ))}
+          {missingRestDays.map((f, i) => (
+            <p key={`consec-${i}`} className="text-xs">
+              ⚠️ {f.staffName} —{" "}
+              {t("sched_compliance_no_rest_day").replace("{days}", String(f.consecutiveDays))}
+            </p>
+          ))}
+          {minijobFindings.map((f, i) => (
+            <p key={`minijob-${i}`} className="text-xs">
+              ⚠️ {f.staffName} —{" "}
+              {t("sched_compliance_minijob")
+                .replace("{amount}", fmtMoney(f.estimatedMonthlyEarnings, country))
+                .replace("{cap}", fmtMoney(f.cap, country))}
+            </p>
+          ))}
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("sched_compliance_disclaimer")}</p>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3">
         {days.map((d, i) => {
           const dayShifts = visibleShifts.filter((s) => s.date === d);
+          const dayForecast = forecastByDate.get(d);
           return (
             <div key={d} className="rounded-xl border border-divider bg-ink-soft p-4">
-              <h3 className="mb-2 text-xs font-medium text-text-on-ink-dim">
-                {t(WEEKDAY_KEYS[i])} · {d}
-              </h3>
+              <div className="mb-2 flex items-baseline justify-between">
+                <h3 className="text-xs font-medium text-text-on-ink-dim">
+                  {t(WEEKDAY_KEYS[i])} · {d}
+                </h3>
+                {dayForecast?.avgRevenue != null && (
+                  <span className="font-num text-[11px] text-brand-green-bright">
+                    {t("sched_forecast_prefix")} {fmtMoney(dayForecast.avgRevenue, country)}
+                  </span>
+                )}
+              </div>
               {dayShifts.length === 0 ? (
                 <p className="text-xs text-text-on-ink-dim">{t("sched_no_shifts")}</p>
               ) : (
