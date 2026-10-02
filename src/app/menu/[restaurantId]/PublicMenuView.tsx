@@ -1,11 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import LanguageToggle from "@/components/LanguageToggle";
 import { submitOrder, type CustomerInfo, type LoyaltyProgress } from "./actions";
+
+const SPEECH_LANG: Record<string, string> = { de: "de-DE", ar: "ar-SA", en: "en-US" };
+const LARGE_TEXT_STORAGE_KEY = "gastrohub_menu_large_text";
+
+type SpeechRecognitionResultLike = { transcript: string };
+interface MinimalSpeechRecognition extends EventTarget {
+  lang: string;
+  interimResults: boolean;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: { results: ArrayLike<ArrayLike<SpeechRecognitionResultLike>> }) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+}
+type SpeechRecognitionWindow = Window & {
+  SpeechRecognition?: new () => MinimalSpeechRecognition;
+  webkitSpeechRecognition?: new () => MinimalSpeechRecognition;
+};
 
 export type PublicMenuItem = {
   id: string;
@@ -34,7 +52,7 @@ export default function PublicMenuView({
   items: PublicMenuItem[];
   lockedTableNumber?: string;
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [cart, setCart] = useState<Record<string, number>>({});
   const [customer, setCustomer] = useState<CustomerInfo>({
     name: "",
@@ -50,9 +68,94 @@ export default function PublicMenuView({
   const [loyalty, setLoyalty] = useState<LoyaltyProgress | undefined>(undefined);
   const [orderId, setOrderId] = useState<string | undefined>(undefined);
   const [plantBasedOnly, setPlantBasedOnly] = useState(false);
+  const [query, setQuery] = useState("");
+  const [largeText, setLargeText] = useState(false);
+  const [micSupported, setMicSupported] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const recognitionRef = useRef<MinimalSpeechRecognition | null>(null);
 
   const hasPlantBasedItems = items.some((i) => i.dietTag !== null);
-  const visibleItems = plantBasedOnly ? items.filter((i) => i.dietTag !== null) : items;
+  const visibleItems = items.filter((i) => {
+    if (plantBasedOnly && i.dietTag === null) return false;
+    if (query.trim() && !i.name.toLowerCase().includes(query.trim().toLowerCase())) return false;
+    return true;
+  });
+
+  useEffect(() => {
+    // Deliberately client-only: feature support and the saved preference
+    // can't be known during SSR, so this can't be computed before mount.
+    const win = window as SpeechRecognitionWindow;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMicSupported(Boolean(win.SpeechRecognition || win.webkitSpeechRecognition));
+    try {
+      setLargeText(localStorage.getItem(LARGE_TEXT_STORAGE_KEY) === "1");
+    } catch {
+      // localStorage can be blocked (private browsing); large-text just stays off
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = largeText ? "115%" : "";
+    try {
+      localStorage.setItem(LARGE_TEXT_STORAGE_KEY, largeText ? "1" : "0");
+    } catch {
+      // ignore — see above
+    }
+    return () => {
+      document.documentElement.style.fontSize = "";
+    };
+  }, [largeText]);
+
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis?.cancel();
+      recognitionRef.current?.stop();
+    };
+  }, []);
+
+  function handleVoiceSearch() {
+    const win = window as SpeechRecognitionWindow;
+    const SpeechRecognitionCtor = win.SpeechRecognition ?? win.webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) return;
+
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = SPEECH_LANG[locale] ?? "en-US";
+    recognition.interimResults = false;
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript;
+      if (transcript) setQuery(transcript);
+    };
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => setListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setListening(true);
+  }
+
+  function toggleReadMenuAloud() {
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+    const lines = visibleItems.map(
+      (item) => `${item.name}, ${fmtMoney(item.price, country)}`
+    );
+    const utterance = new SpeechSynthesisUtterance(
+      [restaurantName, ...lines].join(". ")
+    );
+    utterance.lang = SPEECH_LANG[locale] ?? "en-US";
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+    setSpeaking(true);
+  }
 
   function setQty(id: string, qty: number) {
     setCart((prev) => {
@@ -164,7 +267,20 @@ export default function PublicMenuView({
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col gap-6 px-4 py-10 pb-32">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setLargeText((v) => !v)}
+          aria-pressed={largeText}
+          aria-label={t("public_menu_large_text")}
+          className={`flex min-h-11 items-center gap-1 rounded-full border px-3 text-xs font-semibold ${
+            largeText
+              ? "border-brand-green-bright text-brand-green-bright"
+              : "border-divider text-text-on-ink-dim"
+          }`}
+        >
+          Aa
+        </button>
         <LanguageToggle />
       </div>
       <div className="flex flex-col items-center text-center">
@@ -182,6 +298,48 @@ export default function PublicMenuView({
         <p className="mt-1 text-sm text-text-on-ink-dim">{t("public_menu_lead")}</p>
       </div>
 
+      <div className="flex gap-2">
+        <label className="sr-only" htmlFor="menu-search">
+          {t("public_menu_search_ph")}
+        </label>
+        <input
+          id="menu-search"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("public_menu_search_ph")}
+          className="min-h-11 w-0 min-w-0 flex-1 rounded-lg border border-divider bg-ink-soft px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+        />
+        {micSupported && (
+          <button
+            type="button"
+            onClick={handleVoiceSearch}
+            aria-pressed={listening}
+            aria-label={t("public_menu_voice_search")}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border text-lg ${
+              listening
+                ? "border-brand-green-bright text-brand-green-bright"
+                : "border-divider text-text-on-ink-dim"
+            }`}
+          >
+            🎤
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={toggleReadMenuAloud}
+          aria-pressed={speaking}
+          aria-label={t("public_menu_read_aloud")}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border text-lg ${
+            speaking
+              ? "border-brand-green-bright text-brand-green-bright"
+              : "border-divider text-text-on-ink-dim"
+          }`}
+        >
+          {speaking ? "⏹" : "🔊"}
+        </button>
+      </div>
+
       {hasPlantBasedItems && (
         <button
           type="button"
@@ -197,6 +355,11 @@ export default function PublicMenuView({
       )}
 
       <div className="flex flex-col gap-2.5">
+        {visibleItems.length === 0 && (
+          <p className="text-center text-sm text-text-on-ink-dim">
+            {t("public_menu_no_results")}
+          </p>
+        )}
         {visibleItems.map((item) => {
           const qty = cart[item.id] ?? 0;
           return (
@@ -238,14 +401,18 @@ export default function PublicMenuView({
                     type="button"
                     onClick={() => setQty(item.id, qty - 1)}
                     disabled={qty === 0}
+                    aria-label={`${t("public_menu_qty_decrease")} ${item.name}`}
                     className="flex h-11 w-11 items-center justify-center rounded-lg border border-divider text-lg disabled:opacity-30"
                   >
                     −
                   </button>
-                  <span className="w-6 text-center font-num text-sm">{qty}</span>
+                  <span className="w-6 text-center font-num text-sm" aria-live="polite">
+                    {qty}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setQty(item.id, qty + 1)}
+                    aria-label={`${t("public_menu_qty_increase")} ${item.name}`}
                     className="flex h-11 w-11 items-center justify-center rounded-lg border border-divider text-lg"
                   >
                     +
