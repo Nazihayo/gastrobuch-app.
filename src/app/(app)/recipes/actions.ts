@@ -231,3 +231,89 @@ export async function removeRecipePhoto(recipeId: string): Promise<void> {
 
   revalidatePath("/recipes");
 }
+
+export type EnhancePhotoState = { path?: string; error?: "not_configured" | "no_photo" | "generic" };
+
+const ENHANCE_PROMPT =
+  "Professional restaurant food photography of this exact dish: clean plating, appetizing natural lighting, shallow depth of field, neutral background. Keep the dish itself recognizable — do not change the food.";
+
+// Edits the restaurant's own uploaded photo (not a generic stock image) via
+// OpenAI's image-edit API — requires the restaurant owner's own
+// OPENAI_API_KEY, billed on their OpenAI account, same opt-in pattern as
+// the Claude-powered assistant.
+export async function enhancePhoto(recipeId: string): Promise<EnhancePhotoState> {
+  if (!process.env.OPENAI_API_KEY) {
+    return { error: "not_configured" };
+  }
+
+  const { restaurant } = await getCurrentRestaurant();
+  const supabase = await createClient();
+
+  const { data: recipe } = await supabase
+    .from("recipes")
+    .select("photo_path")
+    .eq("id", recipeId)
+    .eq("restaurant_id", restaurant.id)
+    .single();
+
+  if (!recipe?.photo_path) {
+    return { error: "no_photo" };
+  }
+
+  const { data: fileBlob, error: downloadError } = await supabase.storage
+    .from("menu-photos")
+    .download(recipe.photo_path);
+  if (downloadError || !fileBlob) {
+    return { error: "generic" };
+  }
+
+  const formData = new FormData();
+  formData.append("model", "gpt-image-1");
+  formData.append("image", fileBlob, "photo.jpg");
+  formData.append("prompt", ENHANCE_PROMPT);
+  formData.append("size", "1024x1024");
+
+  let response: Response;
+  try {
+    response = await fetch("https://api.openai.com/v1/images/edits", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+      body: formData,
+    });
+  } catch {
+    return { error: "generic" };
+  }
+
+  if (response.status === 401) {
+    return { error: "not_configured" };
+  }
+  if (!response.ok) {
+    return { error: "generic" };
+  }
+
+  const json = await response.json();
+  const b64: string | undefined = json?.data?.[0]?.b64_json;
+  if (!b64) {
+    return { error: "generic" };
+  }
+
+  const bytes = Buffer.from(b64, "base64");
+  const path = `${restaurant.id}/${recipeId}-enhanced-${Date.now()}.png`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("menu-photos")
+    .upload(path, bytes, { contentType: "image/png" });
+  if (uploadError) {
+    return { error: "generic" };
+  }
+
+  await supabase.storage.from("menu-photos").remove([recipe.photo_path]);
+  await supabase
+    .from("recipes")
+    .update({ photo_path: path })
+    .eq("id", recipeId)
+    .eq("restaurant_id", restaurant.id);
+
+  revalidatePath("/recipes");
+  return { path };
+}

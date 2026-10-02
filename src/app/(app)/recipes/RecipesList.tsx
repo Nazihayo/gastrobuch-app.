@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   addIngredient,
   addRecipe,
+  enhancePhoto,
   removeIngredient,
   removeRecipe,
   removeRecipePhoto,
@@ -99,6 +100,31 @@ export default function RecipesList({
           : result.error === "not_image"
             ? t("rec_photo_not_image")
             : t("rec_photo_error")
+      );
+      return;
+    }
+    if (result.path) {
+      const supabase = createClient();
+      const photoUrl = supabase.storage.from("menu-photos").getPublicUrl(result.path).data
+        .publicUrl;
+      patchRecipeLocal(rid, { photoPath: result.path, photoUrl });
+    }
+  }
+
+  const [enhancingId, setEnhancingId] = useState<string | null>(null);
+
+  async function handleEnhancePhoto(rid: string) {
+    setPhotoError(null);
+    setEnhancingId(rid);
+    const result = await enhancePhoto(rid);
+    setEnhancingId(null);
+    if (result.error) {
+      setPhotoError(
+        result.error === "not_configured"
+          ? t("rec_photo_enhance_not_configured")
+          : result.error === "no_photo"
+            ? t("rec_photo_enhance_no_photo")
+            : t("rec_photo_enhance_error")
       );
       return;
     }
@@ -268,6 +294,16 @@ export default function RecipesList({
               )}
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <p className="text-xs text-text-on-ink-dim">{t("rec_photo_hint")}</p>
+                {r.photoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => handleEnhancePhoto(r.id)}
+                    disabled={enhancingId === r.id}
+                    className="self-start rounded-full border border-divider px-2.5 py-1 text-[10px] font-medium text-text-on-ink-dim hover:text-text-on-ink disabled:opacity-50"
+                  >
+                    {enhancingId === r.id ? "…" : `✨ ${t("rec_photo_enhance_btn")}`}
+                  </button>
+                )}
                 <div className="flex gap-1.5">
                   <button
                     type="button"
