@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentRestaurant } from "@/lib/restaurant";
 import { computeReceipt, type VatCategory } from "@/lib/receipts";
+import { fmtMoney } from "@/lib/countries";
 
 export type OrderStatus = "new" | "confirmed" | "preparing" | "ready" | "completed" | "cancelled";
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<void> {
-  const { restaurant } = await getCurrentRestaurant();
+  const { restaurant, userId } = await getCurrentRestaurant();
   const supabase = await createClient();
 
   await supabase
@@ -18,6 +19,23 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
     .eq("restaurant_id", restaurant.id);
 
   revalidatePath("/orders");
+
+  if (status === "cancelled") {
+    const { data: cancelled } = await supabase
+      .from("orders")
+      .select("total_estimate")
+      .eq("id", orderId)
+      .eq("restaurant_id", restaurant.id)
+      .single();
+
+    await supabase.from("audit_log").insert({
+      restaurant_id: restaurant.id,
+      user_id: userId,
+      action: "order_cancelled",
+      detail: cancelled ? fmtMoney(cancelled.total_estimate, restaurant.country) : "",
+      order_id: orderId,
+    });
+  }
 
   // Dine-in orders are billed through the table's tab when it closes (see
   // tables/actions.ts) — only pickup/delivery orders get their own receipt
