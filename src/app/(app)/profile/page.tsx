@@ -11,7 +11,7 @@ export default async function ProfilePage() {
     supabase
       .from("restaurants")
       .select(
-        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, table_count, logo_path, whatsapp_number"
+        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, table_count, logo_path, whatsapp_number, stripe_account_id, stripe_onboarded"
       )
       .eq("id", restaurant.id)
       .single(),
@@ -63,6 +63,8 @@ export default async function ProfilePage() {
       datevBeraterNr={data?.datev_berater_nr ?? ""}
       datevMandantNr={data?.datev_mandant_nr ?? ""}
       whatsappNumber={data?.whatsapp_number ?? ""}
+      stripeConnected={Boolean(data?.stripe_account_id)}
+      stripeOnboarded={data?.stripe_onboarded ?? false}
       loyaltyTiers={loyaltyTiers ?? []}
       tableCount={tableCount}
       tableQrCodes={tableQrCodes}

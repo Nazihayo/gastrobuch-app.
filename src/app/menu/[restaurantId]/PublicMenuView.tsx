@@ -5,7 +5,7 @@ import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import LanguageToggle from "@/components/LanguageToggle";
-import { submitOrder, type CustomerInfo, type LoyaltyProgress } from "./actions";
+import { createCheckoutSession, submitOrder, type CustomerInfo, type LoyaltyProgress } from "./actions";
 
 const SPEECH_LANG: Record<string, string> = { de: "de-DE", ar: "ar-SA", en: "en-US" };
 const LARGE_TEXT_STORAGE_KEY = "gastrohub_menu_large_text";
@@ -40,6 +40,7 @@ export default function PublicMenuView({
   restaurantName,
   restaurantLogoUrl,
   restaurantWhatsapp,
+  restaurantStripeOnboarded,
   country,
   items,
   lockedTableNumber,
@@ -48,6 +49,7 @@ export default function PublicMenuView({
   restaurantName: string;
   restaurantLogoUrl: string | null;
   restaurantWhatsapp: string | null;
+  restaurantStripeOnboarded: boolean;
   country: CountryCode;
   items: PublicMenuItem[];
   lockedTableNumber?: string;
@@ -63,6 +65,7 @@ export default function PublicMenuView({
     notes: "",
   });
   const [pending, setPending] = useState(false);
+  const [payingOnline, setPayingOnline] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loyalty, setLoyalty] = useState<LoyaltyProgress | undefined>(undefined);
@@ -200,6 +203,31 @@ export default function PublicMenuView({
     setLoyalty(result.loyalty);
     setOrderId(result.orderId);
     setSuccess(true);
+  }
+
+  async function handlePayOnline() {
+    setError(null);
+    setPayingOnline(true);
+    const result = await createCheckoutSession(
+      restaurantId,
+      cartLines.map((l) => ({
+        name: l.item.name,
+        price: l.item.price,
+        quantity: l.quantity,
+        category: l.item.category,
+      })),
+      customer
+    );
+    setPayingOnline(false);
+    if (result.error) {
+      setError(
+        result.error === "not_available"
+          ? t("checkout_pay_online_unavailable")
+          : t(`order_error_${result.error}` as const)
+      );
+      return;
+    }
+    if (result.url) window.location.href = result.url;
   }
 
   function buildOrderWhatsAppMessage(): string {
@@ -531,10 +559,27 @@ export default function PublicMenuView({
           >
             {pending ? "…" : t("checkout_submit")}
           </button>
+
+          {restaurantStripeOnboarded && (
+            <button
+              type="button"
+              onClick={handlePayOnline}
+              disabled={payingOnline}
+              className="min-h-11 rounded-lg border border-brand-green-bright px-4 py-3 text-sm font-bold text-brand-green-bright disabled:opacity-50"
+            >
+              {payingOnline ? "…" : t("checkout_pay_online_btn")}
+            </button>
+          )}
         </form>
       )}
 
-      <p className="text-center text-xs text-text-on-ink-dim">{t("public_menu_disclaimer")}</p>
+      <p className="text-center text-xs text-text-on-ink-dim">
+        {t(
+          restaurantStripeOnboarded
+            ? "public_menu_disclaimer_with_payment"
+            : "public_menu_disclaimer"
+        )}
+      </p>
     </main>
   );
 }

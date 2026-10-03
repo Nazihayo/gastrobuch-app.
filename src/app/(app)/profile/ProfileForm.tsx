@@ -13,6 +13,7 @@ import {
   uploadLogo,
   type LoyaltyTier,
 } from "./actions";
+import { disconnectStripe, startStripeOnboarding } from "./stripeActions";
 
 export default function ProfileForm({
   name,
@@ -29,6 +30,8 @@ export default function ProfileForm({
   datevBeraterNr,
   datevMandantNr,
   whatsappNumber,
+  stripeConnected,
+  stripeOnboarded,
   loyaltyTiers,
   tableCount,
   tableQrCodes,
@@ -50,6 +53,8 @@ export default function ProfileForm({
   datevBeraterNr: string;
   datevMandantNr: string;
   whatsappNumber: string;
+  stripeConnected: boolean;
+  stripeOnboarded: boolean;
   loyaltyTiers: LoyaltyTier[];
   tableCount: number;
   tableQrCodes: { number: number; qrDataUrl: string }[];
@@ -126,6 +131,31 @@ export default function ProfileForm({
     setTiers((prev) => prev.filter((tr) => tr.id !== id));
     startTransition(() => {
       removeLoyaltyTier(id);
+    });
+  }
+
+  const [stripeConnecting, setStripeConnecting] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+  const [stripeIsConnected, setStripeIsConnected] = useState(stripeConnected);
+
+  async function handleConnectStripe() {
+    setStripeConnecting(true);
+    setStripeError(null);
+    const result = await startStripeOnboarding();
+    setStripeConnecting(false);
+    if (result.error) {
+      setStripeError(
+        result.error === "not_configured" ? t("profile_stripe_not_configured") : t("profile_stripe_error")
+      );
+      return;
+    }
+    if (result.url) window.location.href = result.url;
+  }
+
+  function handleDisconnectStripe() {
+    setStripeIsConnected(false);
+    startTransition(() => {
+      disconnectStripe();
     });
   }
 
@@ -212,6 +242,47 @@ export default function ProfileForm({
           />
         </Field>
         <p className="text-xs text-text-on-ink-dim">{t("profile_whatsapp_hint")}</p>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-divider bg-ink-soft p-5">
+        <div>
+          <h2 className="text-sm font-semibold">{t("profile_stripe_title")}</h2>
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_stripe_lead")}</p>
+        </div>
+        {stripeOnboarded ? (
+          <>
+            <div className="flex items-center gap-2 rounded-lg border border-brand-green-bright/40 bg-brand-green-bright/10 px-3 py-2.5 text-sm font-semibold text-brand-green-bright">
+              ✅ {t("profile_stripe_connected")}
+            </div>
+            <button
+              type="button"
+              onClick={handleDisconnectStripe}
+              className="min-h-11 rounded-lg border border-divider px-3 text-sm font-semibold text-text-on-ink-dim hover:text-brand-red"
+            >
+              {t("profile_stripe_disconnect")}
+            </button>
+          </>
+        ) : (
+          <>
+            {stripeIsConnected && (
+              <p className="text-xs text-text-on-ink-dim">{t("profile_stripe_incomplete")}</p>
+            )}
+            <button
+              type="button"
+              onClick={handleConnectStripe}
+              disabled={stripeConnecting}
+              className="min-h-11 rounded-lg bg-brand-green-bright px-4 py-3 text-sm font-bold text-[#0A1F16] disabled:opacity-50"
+            >
+              {stripeConnecting
+                ? "…"
+                : stripeIsConnected
+                  ? t("profile_stripe_continue_btn")
+                  : t("profile_stripe_connect_btn")}
+            </button>
+            {stripeError && <p className="text-xs text-brand-red">{stripeError}</p>}
+          </>
+        )}
+        <p className="text-xs text-text-on-ink-dim">{t("profile_stripe_disclaimer")}</p>
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-divider bg-ink-soft p-5">

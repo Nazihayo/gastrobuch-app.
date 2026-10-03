@@ -8,6 +8,7 @@ type MenuRow = {
   restaurant_country: CountryCode;
   restaurant_logo_path: string | null;
   restaurant_whatsapp_number: string | null;
+  restaurant_stripe_onboarded: boolean;
   id: string;
   name: string;
   price: number;
@@ -56,6 +57,7 @@ export default async function PublicMenuPage({
       restaurantName={items[0].restaurant_name}
       restaurantLogoUrl={publicUrl(items[0].restaurant_logo_path)}
       restaurantWhatsapp={items[0].restaurant_whatsapp_number}
+      restaurantStripeOnboarded={items[0].restaurant_stripe_onboarded}
       country={items[0].restaurant_country}
       items={menuItems}
       lockedTableNumber={table?.trim() || undefined}

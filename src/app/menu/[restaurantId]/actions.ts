@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getStripeClient, toStripeCurrency } from "@/lib/stripe";
+import type { CountryCode } from "@/lib/countries";
 
 export type CartItem = {
   name: string;
@@ -38,22 +40,22 @@ export type SubmitOrderState = {
   loyalty?: LoyaltyProgress;
 };
 
+function validateOrder(cart: CartItem[], customer: CustomerInfo): SubmitOrderError | null {
+  if (cart.length === 0) return "empty_cart";
+  if (!customer.name.trim() || !customer.phone.trim()) return "missing_info";
+  if (customer.orderType === "delivery" && !customer.address.trim()) return "missing_address";
+  if (customer.orderType === "dine_in" && !customer.tableNumber.trim()) return "missing_table";
+  return null;
+}
+
 export async function submitOrder(
   restaurantId: string,
   cart: CartItem[],
   customer: CustomerInfo
 ): Promise<SubmitOrderState> {
-  if (cart.length === 0) {
-    return { error: "empty_cart" };
-  }
-  if (!customer.name.trim() || !customer.phone.trim()) {
-    return { error: "missing_info" };
-  }
-  if (customer.orderType === "delivery" && !customer.address.trim()) {
-    return { error: "missing_address" };
-  }
-  if (customer.orderType === "dine_in" && !customer.tableNumber.trim()) {
-    return { error: "missing_table" };
+  const validationError = validateOrder(cart, customer);
+  if (validationError) {
+    return { error: validationError };
   }
 
   const supabase = await createClient();
@@ -100,4 +102,73 @@ export async function submitOrder(
       nextTierReward: row.next_tier_reward,
     },
   };
+}
+
+export type CreateCheckoutSessionState = { url?: string; error?: SubmitOrderError | "not_available" | "generic" };
+
+// Creates a Stripe Checkout Session directly on the restaurant's own
+// connected Stripe account (a "direct charge") — the restaurant is the
+// merchant of record and gets the money straight away, no platform fee.
+// The order itself is only created once Stripe confirms payment, via the
+// webhook (see /api/stripe/webhook) — not here — so an abandoned checkout
+// never leaves a ghost "unpaid" order behind.
+export async function createCheckoutSession(
+  restaurantId: string,
+  cart: CartItem[],
+  customer: CustomerInfo
+): Promise<CreateCheckoutSessionState> {
+  const validationError = validateOrder(cart, customer);
+  if (validationError) {
+    return { error: validationError };
+  }
+
+  const stripe = getStripeClient();
+  if (!stripe) return { error: "not_available" };
+
+  const supabase = await createClient();
+  const { data: restaurant } = await supabase
+    .from("restaurants")
+    .select("stripe_account_id, stripe_onboarded, country")
+    .eq("id", restaurantId)
+    .single();
+
+  if (!restaurant?.stripe_onboarded || !restaurant.stripe_account_id) {
+    return { error: "not_available" };
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const currency = toStripeCurrency(restaurant.country as CountryCode);
+
+  try {
+    const session = await stripe.checkout.sessions.create(
+      {
+        mode: "payment",
+        line_items: cart.map((item) => ({
+          price_data: {
+            currency,
+            product_data: { name: item.name, metadata: { category: item.category } },
+            unit_amount: Math.round(item.price * 100),
+          },
+          quantity: item.quantity,
+        })),
+        success_url: `${siteUrl}/menu/${restaurantId}/paid?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${siteUrl}/menu/${restaurantId}`,
+        metadata: {
+          restaurant_id: restaurantId,
+          customer_name: customer.name.trim(),
+          customer_phone: customer.phone.trim(),
+          customer_address: customer.address.trim(),
+          order_type: customer.orderType,
+          notes: customer.notes.trim(),
+          table_number: customer.tableNumber.trim(),
+        },
+      },
+      { stripeAccount: restaurant.stripe_account_id }
+    );
+
+    if (!session.url) return { error: "generic" };
+    return { url: session.url };
+  } catch {
+    return { error: "generic" };
+  }
 }
