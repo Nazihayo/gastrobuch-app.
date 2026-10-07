@@ -7,6 +7,18 @@ import BottomNav from "@/components/BottomNav";
 import RestaurantSwitcher from "@/components/RestaurantSwitcher";
 import { signOut } from "@/app/actions";
 
+function isBillingBlocked(restaurant: {
+  subscriptionStatus: "trialing" | "active" | "past_due" | "canceled";
+  trialEndsAt: string;
+}): boolean {
+  const trialExpired =
+    restaurant.subscriptionStatus === "trialing" &&
+    new Date(restaurant.trialEndsAt).getTime() < Date.now();
+  const subscriptionLapsed =
+    restaurant.subscriptionStatus === "past_due" || restaurant.subscriptionStatus === "canceled";
+  return trialExpired || subscriptionLapsed;
+}
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [{ restaurant, role, allRestaurants }, locale] = await Promise.all([
     getCurrentRestaurant(),
@@ -16,6 +28,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // operational tabs — RLS already blocks their writes, this just keeps
   // them out of a UI built for editing they can't do.
   if (role === "accountant") redirect("/accountant");
+
+  // Paywall: a trial that's run out, or a subscription that's lapsed,
+  // blocks the operational app entirely and sends the owner to /billing —
+  // staff/accountant access is governed by the owner's own membership role
+  // check above, so this only ever stops the restaurant that stopped paying.
+  if (isBillingBlocked(restaurant)) redirect("/billing");
+
   const t = dictionaries[locale];
 
   return (

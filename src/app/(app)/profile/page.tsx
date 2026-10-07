@@ -4,7 +4,7 @@ import { getCurrentRestaurant } from "@/lib/restaurant";
 import ProfileForm from "./ProfileForm";
 
 export default async function ProfilePage() {
-  const { restaurant } = await getCurrentRestaurant();
+  const { restaurant, role } = await getCurrentRestaurant();
   const supabase = await createClient();
 
   const [{ data }, { count: menuItemCount }, { data: loyaltyTiers }] = await Promise.all([
@@ -65,6 +65,12 @@ export default async function ProfilePage() {
       whatsappNumber={data?.whatsapp_number ?? ""}
       stripeConnected={Boolean(data?.stripe_account_id)}
       stripeOnboarded={data?.stripe_onboarded ?? false}
+      subscriptionStatus={restaurant.subscriptionStatus}
+      trialDaysLeft={Math.max(
+        0,
+        Math.ceil((new Date(restaurant.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      )}
+      isOwner={role === "owner"}
       loyaltyTiers={loyaltyTiers ?? []}
       tableCount={tableCount}
       tableQrCodes={tableQrCodes}

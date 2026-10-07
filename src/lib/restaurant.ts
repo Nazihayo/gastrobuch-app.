@@ -16,6 +16,8 @@ export type CurrentRestaurant = {
     name: string;
     country: CountryCode;
     language: Locale;
+    subscriptionStatus: "trialing" | "active" | "past_due" | "canceled";
+    trialEndsAt: string;
   };
   // Every restaurant this user belongs to, for the restaurant switcher —
   // most users only ever have one, but the schema has supported many-to-many
@@ -51,18 +53,25 @@ export const getCurrentRestaurant = cache(async (): Promise<CurrentRestaurant> =
   const restaurantIds = memberships.map((m) => m.restaurant_id);
   const { data: restaurants } = await supabase
     .from("restaurants")
-    .select("id, name, country, language")
+    .select("id, name, country, language, subscription_status, trial_ends_at")
     .in("id", restaurantIds);
 
-  const restaurant = (restaurants ?? []).find((r) => r.id === selected.restaurant_id);
-  if (!restaurant) {
+  const row = (restaurants ?? []).find((r) => r.id === selected.restaurant_id);
+  if (!row) {
     redirect("/onboarding");
   }
 
   return {
     userId: user.id,
     role: selected.role as MemberRole,
-    restaurant,
+    restaurant: {
+      id: row.id,
+      name: row.name,
+      country: row.country,
+      language: row.language,
+      subscriptionStatus: row.subscription_status,
+      trialEndsAt: row.trial_ends_at,
+    },
     allRestaurants: (restaurants ?? []).map((r) => ({ id: r.id, name: r.name })),
   };
 });

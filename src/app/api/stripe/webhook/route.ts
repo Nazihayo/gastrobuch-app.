@@ -28,6 +28,31 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid signature" }, { status: 400 });
   }
 
+  // Subscription lifecycle events are platform-level (never event.account —
+  // GastroHub's own revenue, unlike the Connect order flow below) and are
+  // handled separately from the per-order checkout.session.completed case.
+  if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object as Stripe.Subscription;
+    const restaurantId = subscription.metadata.restaurant_id;
+    if (!restaurantId) return NextResponse.json({ received: true });
+
+    const status =
+      event.type === "customer.subscription.deleted"
+        ? "canceled"
+        : subscription.status === "active"
+          ? "active"
+          : subscription.status === "past_due" || subscription.status === "unpaid"
+            ? "past_due"
+            : subscription.status === "canceled" || subscription.status === "incomplete_expired"
+              ? "canceled"
+              : null;
+    if (!status) return NextResponse.json({ received: true });
+
+    const admin = createAdminClient();
+    await admin.from("restaurants").update({ subscription_status: status }).eq("id", restaurantId);
+    return NextResponse.json({ received: true });
+  }
+
   if (event.type !== "checkout.session.completed") {
     return NextResponse.json({ received: true });
   }
@@ -36,6 +61,23 @@ export async function POST(req: Request) {
   const connectedAccountId = event.account;
   const meta = session.metadata ?? {};
   const restaurantId = meta.restaurant_id;
+
+  // A platform-level (no event.account) subscription checkout completing —
+  // GastroHub's own subscription revenue, separate from the Connect order
+  // flow below which always carries event.account.
+  if (!connectedAccountId && session.mode === "subscription" && restaurantId) {
+    const admin = createAdminClient();
+    await admin
+      .from("restaurants")
+      .update({
+        subscription_status: "active",
+        stripe_subscription_id:
+          typeof session.subscription === "string" ? session.subscription : session.subscription?.id,
+      })
+      .eq("id", restaurantId);
+    return NextResponse.json({ received: true });
+  }
+
   if (!restaurantId || !connectedAccountId) {
     return NextResponse.json({ received: true });
   }

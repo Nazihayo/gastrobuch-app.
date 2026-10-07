@@ -14,6 +14,7 @@ import {
   type LoyaltyTier,
 } from "./actions";
 import { disconnectStripe, startStripeOnboarding } from "./stripeActions";
+import { openBillingPortal } from "@/app/billing/actions";
 
 export default function ProfileForm({
   name,
@@ -32,6 +33,9 @@ export default function ProfileForm({
   whatsappNumber,
   stripeConnected,
   stripeOnboarded,
+  subscriptionStatus,
+  trialDaysLeft,
+  isOwner,
   loyaltyTiers,
   tableCount,
   tableQrCodes,
@@ -55,6 +59,9 @@ export default function ProfileForm({
   whatsappNumber: string;
   stripeConnected: boolean;
   stripeOnboarded: boolean;
+  subscriptionStatus: "trialing" | "active" | "past_due" | "canceled";
+  trialDaysLeft: number;
+  isOwner: boolean;
   loyaltyTiers: LoyaltyTier[];
   tableCount: number;
   tableQrCodes: { number: number; qrDataUrl: string }[];
@@ -157,6 +164,15 @@ export default function ProfileForm({
     startTransition(() => {
       disconnectStripe();
     });
+  }
+
+  const [portalPending, setPortalPending] = useState(false);
+
+  async function handleOpenBillingPortal() {
+    setPortalPending(true);
+    const result = await openBillingPortal();
+    if (result.url) window.location.href = result.url;
+    setPortalPending(false);
   }
 
   return (
@@ -283,6 +299,38 @@ export default function ProfileForm({
           </>
         )}
         <p className="text-xs text-text-on-ink-dim">{t("profile_stripe_disclaimer")}</p>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-divider bg-ink-soft p-5">
+        <div>
+          <h2 className="text-sm font-semibold">{t("profile_billing_title")}</h2>
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_billing_lead")}</p>
+        </div>
+        <div
+          className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold ${
+            subscriptionStatus === "active"
+              ? "border border-brand-green-bright/40 bg-brand-green-bright/10 text-brand-green-bright"
+              : subscriptionStatus === "trialing"
+                ? "border border-divider text-text-on-ink-dim"
+                : "border border-brand-red/40 bg-brand-red/10 text-brand-red"
+          }`}
+        >
+          {subscriptionStatus === "active" && `✅ ${t("profile_billing_status_active")}`}
+          {subscriptionStatus === "trialing" &&
+            `⏳ ${t("profile_billing_status_trialing").replace("{days}", String(trialDaysLeft))}`}
+          {subscriptionStatus === "past_due" && `⚠️ ${t("profile_billing_status_past_due")}`}
+          {subscriptionStatus === "canceled" && `⚠️ ${t("profile_billing_status_canceled")}`}
+        </div>
+        {isOwner && (
+          <button
+            type="button"
+            onClick={handleOpenBillingPortal}
+            disabled={portalPending}
+            className="min-h-11 rounded-lg border border-divider px-3 text-sm font-semibold text-text-on-ink-dim hover:text-text-on-ink disabled:opacity-50"
+          >
+            {portalPending ? "…" : t("profile_billing_manage_btn")}
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-divider bg-ink-soft p-5">
