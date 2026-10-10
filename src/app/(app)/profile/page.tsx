@@ -11,7 +11,7 @@ export default async function ProfilePage() {
     supabase
       .from("restaurants")
       .select(
-        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, table_count, logo_path, whatsapp_number, stripe_account_id, stripe_onboarded, ramadan_mode_enabled, ramadan_city"
+        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, table_count, logo_path, whatsapp_number, stripe_account_id, stripe_onboarded, ramadan_mode_enabled, ramadan_city, menu_slug"
       )
       .eq("id", restaurant.id)
       .single(),
@@ -28,7 +28,7 @@ export default async function ProfilePage() {
   ]);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const menuUrl = `${siteUrl}/menu/${restaurant.id}`;
+  const menuUrl = data?.menu_slug ? `${siteUrl}/m/${data.menu_slug}` : `${siteUrl}/menu/${restaurant.id}`;
   const hasMenuItems = (menuItemCount ?? 0) > 0;
   const menuQrDataUrl = hasMenuItems ? await QRCode.toDataURL(menuUrl, { margin: 1 }) : null;
 
@@ -73,6 +73,8 @@ export default async function ProfilePage() {
       isOwner={role === "owner"}
       ramadanModeEnabled={data?.ramadan_mode_enabled ?? false}
       ramadanCity={data?.ramadan_city ?? ""}
+      menuSlug={data?.menu_slug ?? ""}
+      siteUrl={siteUrl}
       loyaltyTiers={loyaltyTiers ?? []}
       tableCount={tableCount}
       tableQrCodes={tableQrCodes}

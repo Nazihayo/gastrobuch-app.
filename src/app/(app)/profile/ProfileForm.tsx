@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/context";
 import { COUNTRIES, type CountryCode } from "@/lib/countries";
 import { createClient } from "@/lib/supabase/client";
@@ -9,6 +10,7 @@ import {
   removeLoyaltyTier,
   removeLogo,
   updateLoyaltyTier,
+  updateMenuSlug,
   updateRestaurantProfile,
   uploadLogo,
   type LoyaltyTier,
@@ -38,6 +40,8 @@ export default function ProfileForm({
   isOwner,
   ramadanModeEnabled: initialRamadanModeEnabled,
   ramadanCity,
+  menuSlug,
+  siteUrl,
   loyaltyTiers,
   tableCount,
   tableQrCodes,
@@ -66,6 +70,8 @@ export default function ProfileForm({
   isOwner: boolean;
   ramadanModeEnabled: boolean;
   ramadanCity: string;
+  menuSlug: string;
+  siteUrl: string;
   loyaltyTiers: LoyaltyTier[];
   tableCount: number;
   tableQrCodes: { number: number; qrDataUrl: string }[];
@@ -74,12 +80,32 @@ export default function ProfileForm({
   menuQrDataUrl: string | null;
 }) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [tiers, setTiers] = useState(loyaltyTiers);
   const conf = COUNTRIES[country];
+
+  const [slugDraft, setSlugDraft] = useState(menuSlug);
+  const [slugPending, setSlugPending] = useState(false);
+  const [slugError, setSlugError] = useState<"invalid" | "taken" | "generic" | null>(null);
+  const [slugSaved, setSlugSaved] = useState(false);
+
+  async function handleSaveSlug() {
+    setSlugPending(true);
+    setSlugError(null);
+    setSlugSaved(false);
+    const result = await updateMenuSlug(slugDraft);
+    setSlugPending(false);
+    if (result.success) {
+      setSlugSaved(true);
+      router.refresh();
+    } else {
+      setSlugError(result.error ?? "generic");
+    }
+  }
 
   async function handleCopyLink() {
     try {
@@ -499,6 +525,45 @@ export default function ProfileForm({
           <h2 className="text-sm font-semibold">{t("profile_menu_title")}</h2>
           <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_menu_lead")}</p>
         </div>
+
+        <div className="flex w-full flex-col gap-1.5 text-left">
+          <label className="text-xs text-text-on-ink-dim">{t("profile_slug_label")}</label>
+          <div className="flex items-center gap-1 text-sm">
+            <span className="shrink-0 text-text-on-ink-dim">{siteUrl.replace(/^https?:\/\//, "")}/m/</span>
+            <input
+              type="text"
+              value={slugDraft}
+              onChange={(e) => {
+                setSlugDraft(e.target.value.toLowerCase());
+                setSlugSaved(false);
+              }}
+              placeholder={t("profile_slug_ph")}
+              maxLength={40}
+              className="min-h-11 min-w-0 flex-1 rounded-lg border border-divider bg-transparent px-2 py-2 text-sm outline-none focus:border-brand-green-bright"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleSaveSlug}
+              disabled={slugPending || slugDraft === menuSlug}
+              className="min-h-9 rounded-lg border border-divider px-3 text-xs font-semibold disabled:opacity-50"
+            >
+              {slugPending ? "…" : t("profile_slug_save")}
+            </button>
+            {slugSaved && <span className="text-xs text-brand-green-bright">{t("profile_slug_saved")}</span>}
+            {slugError && (
+              <span className="text-xs text-brand-red">
+                {slugError === "taken"
+                  ? t("profile_slug_taken")
+                  : slugError === "invalid"
+                    ? t("profile_slug_invalid")
+                    : t("profile_slug_error")}
+              </span>
+            )}
+          </div>
+        </div>
+
         {menuQrDataUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element -- a locally generated data: URI, not a remote image Next's optimizer can process */}

@@ -49,6 +49,39 @@ export async function updateRestaurantProfile(patch: {
   revalidatePath("/", "layout");
 }
 
+export type UpdateMenuSlugState = { success?: boolean; error?: "invalid" | "taken" | "generic" };
+
+const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+// A self-serve branded link (gastrobuch-app.vercel.app/m/<slug>) the owner
+// picks themselves — see 20261010000002_menu_slug.sql for why this is
+// buildable without a custom domain or a sales call.
+export async function updateMenuSlug(rawSlug: string): Promise<UpdateMenuSlugState> {
+  const { restaurant } = await getCurrentRestaurant();
+  const supabase = await createClient();
+
+  const slug = rawSlug.trim().toLowerCase();
+  if (slug === "") {
+    await supabase.from("restaurants").update({ menu_slug: null }).eq("id", restaurant.id);
+    revalidatePath("/profile");
+    return { success: true };
+  }
+
+  if (slug.length < 3 || slug.length > 40 || !SLUG_PATTERN.test(slug)) {
+    return { error: "invalid" };
+  }
+
+  const { error } = await supabase.from("restaurants").update({ menu_slug: slug }).eq("id", restaurant.id);
+  if (error) {
+    // Postgres unique_violation
+    if (error.code === "23505") return { error: "taken" };
+    return { error: "generic" };
+  }
+
+  revalidatePath("/profile");
+  return { success: true };
+}
+
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
 export type UploadLogoState = { error?: string; path?: string };
