@@ -42,6 +42,9 @@ export default function ProfileForm({
   ramadanCity,
   menuSlug,
   siteUrl,
+  groupRewardThreshold,
+  groupRewardText,
+  referralRewardText,
   loyaltyTiers,
   tableCount,
   tableQrCodes,
@@ -72,6 +75,9 @@ export default function ProfileForm({
   ramadanCity: string;
   menuSlug: string;
   siteUrl: string;
+  groupRewardThreshold: number;
+  groupRewardText: string;
+  referralRewardText: string;
   loyaltyTiers: LoyaltyTier[];
   tableCount: number;
   tableQrCodes: { number: number; qrDataUrl: string }[];
@@ -396,6 +402,40 @@ export default function ProfileForm({
             />
           </Field>
         )}
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-divider bg-ink-soft p-5">
+        <div>
+          <h2 className="text-sm font-semibold">🎉 {t("profile_group_reward_title")}</h2>
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_group_reward_lead")}</p>
+        </div>
+        <Field label={t("profile_group_reward_threshold_label")}>
+          <TextInput
+            type="number"
+            defaultValue={groupRewardThreshold ? String(groupRewardThreshold) : ""}
+            placeholder="50"
+            onCommit={(v) => commit({ groupRewardThreshold: Number(v) || 0 })}
+          />
+        </Field>
+        <Field label={t("profile_group_reward_text_label")}>
+          <TextInput
+            defaultValue={groupRewardText}
+            placeholder={t("profile_group_reward_text_ph")}
+            onCommit={(v) => commit({ groupRewardText: v })}
+          />
+        </Field>
+        <div className="my-1 border-t border-divider" />
+        <div>
+          <h2 className="text-sm font-semibold">🔗 {t("profile_referral_title")}</h2>
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_referral_lead")}</p>
+        </div>
+        <Field label={t("profile_referral_text_label")}>
+          <TextInput
+            defaultValue={referralRewardText}
+            placeholder={t("profile_referral_text_ph")}
+            onCommit={(v) => commit({ referralRewardText: v })}
+          />
+        </Field>
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-divider bg-ink-soft p-5">

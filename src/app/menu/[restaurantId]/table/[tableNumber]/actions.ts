@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { LoyaltyProgress, SubmitOrderError } from "../../actions";
+import type { GroupReward, LoyaltyProgress, SubmitOrderError } from "../../actions";
 
 export type JoinTableCartState = { sessionId?: string; error?: "generic" };
 
@@ -27,6 +27,7 @@ export type SubmitTableCartState = {
   success?: boolean;
   orderId?: string;
   loyalty?: LoyaltyProgress;
+  groupReward?: GroupReward;
 };
 
 export async function submitTableCart(
@@ -59,15 +60,21 @@ export async function submitTableCart(
     next_tier_name: string | null;
     next_tier_threshold: number | null;
     next_tier_reward: string | null;
+    group_reward_unlocked: boolean;
+    group_reward_text: string | null;
   };
 
+  const groupReward =
+    row.group_reward_unlocked && row.group_reward_text ? { text: row.group_reward_text } : undefined;
+
   if (!row.just_reached_tier_name && !row.next_tier_name) {
-    return { success: true, orderId: row.order_id };
+    return { success: true, orderId: row.order_id, groupReward };
   }
 
   return {
     success: true,
     orderId: row.order_id,
+    groupReward,
     loyalty: {
       totalOrders: row.customer_total_orders,
       justReachedTierName: row.just_reached_tier_name,

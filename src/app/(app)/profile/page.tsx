@@ -11,7 +11,7 @@ export default async function ProfilePage() {
     supabase
       .from("restaurants")
       .select(
-        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, table_count, logo_path, whatsapp_number, stripe_account_id, stripe_onboarded, ramadan_mode_enabled, ramadan_city, menu_slug"
+        "name, country, phone, address, tax_id, datev_konto_food, datev_konto_drink, datev_konto_wages, datev_konto_expenses, datev_konto_bank, datev_berater_nr, datev_mandant_nr, table_count, logo_path, whatsapp_number, stripe_account_id, stripe_onboarded, ramadan_mode_enabled, ramadan_city, menu_slug, group_reward_threshold, group_reward_text, referral_reward_text"
       )
       .eq("id", restaurant.id)
       .single(),
@@ -75,6 +75,9 @@ export default async function ProfilePage() {
       ramadanCity={data?.ramadan_city ?? ""}
       menuSlug={data?.menu_slug ?? ""}
       siteUrl={siteUrl}
+      groupRewardThreshold={data?.group_reward_threshold ?? 0}
+      groupRewardText={data?.group_reward_text ?? ""}
+      referralRewardText={data?.referral_reward_text ?? ""}
       loyaltyTiers={loyaltyTiers ?? []}
       tableCount={tableCount}
       tableQrCodes={tableQrCodes}

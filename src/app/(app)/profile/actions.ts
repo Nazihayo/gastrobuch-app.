@@ -20,6 +20,9 @@ export async function updateRestaurantProfile(patch: {
   whatsappNumber?: string;
   ramadanModeEnabled?: boolean;
   ramadanCity?: string;
+  groupRewardThreshold?: number;
+  groupRewardText?: string;
+  referralRewardText?: string;
 }): Promise<void> {
   const { restaurant } = await getCurrentRestaurant();
   const supabase = await createClient();
@@ -41,6 +44,9 @@ export async function updateRestaurantProfile(patch: {
   if (patch.whatsappNumber !== undefined) dbPatch.whatsapp_number = patch.whatsappNumber;
   if (patch.ramadanModeEnabled !== undefined) dbPatch.ramadan_mode_enabled = patch.ramadanModeEnabled;
   if (patch.ramadanCity !== undefined) dbPatch.ramadan_city = patch.ramadanCity;
+  if (patch.groupRewardThreshold !== undefined) dbPatch.group_reward_threshold = patch.groupRewardThreshold;
+  if (patch.groupRewardText !== undefined) dbPatch.group_reward_text = patch.groupRewardText;
+  if (patch.referralRewardText !== undefined) dbPatch.referral_reward_text = patch.referralRewardText;
 
   await supabase.from("restaurants").update(dbPatch).eq("id", restaurant.id);
 

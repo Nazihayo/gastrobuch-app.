@@ -17,6 +17,7 @@ export type CustomerInfo = {
   tableNumber: string;
   orderType: "pickup" | "delivery" | "dine_in";
   notes: string;
+  referralCode: string;
 };
 
 export type SubmitOrderError =
@@ -33,11 +34,14 @@ export type LoyaltyProgress = {
   nextTierThreshold: number | null;
   nextTierReward: string | null;
 };
+export type GroupReward = { text: string };
 export type SubmitOrderState = {
   error?: SubmitOrderError;
   success?: boolean;
   orderId?: string;
   loyalty?: LoyaltyProgress;
+  referralCode?: string;
+  groupReward?: GroupReward;
 };
 
 function validateOrder(cart: CartItem[], customer: CustomerInfo): SubmitOrderError | null {
@@ -69,6 +73,7 @@ export async function submitOrder(
       notes: customer.notes.trim(),
       items: cart,
       p_table_number: customer.tableNumber.trim(),
+      p_referral_code: customer.referralCode.trim().toUpperCase(),
     })
     .single();
 
@@ -84,15 +89,25 @@ export async function submitOrder(
     next_tier_name: string | null;
     next_tier_threshold: number | null;
     next_tier_reward: string | null;
+    referral_code: string | null;
+    group_reward_unlocked: boolean;
+    group_reward_text: string | null;
   };
 
+  const groupReward = row.group_reward_unlocked && row.group_reward_text
+    ? { text: row.group_reward_text }
+    : undefined;
+  const referralCode = row.referral_code ?? undefined;
+
   if (!row.just_reached_tier_name && !row.next_tier_name) {
-    return { success: true, orderId: row.order_id };
+    return { success: true, orderId: row.order_id, referralCode, groupReward };
   }
 
   return {
     success: true,
     orderId: row.order_id,
+    referralCode,
+    groupReward,
     loyalty: {
       totalOrders: row.customer_total_orders,
       justReachedTierName: row.just_reached_tier_name,

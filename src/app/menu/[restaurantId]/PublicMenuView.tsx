@@ -6,7 +6,13 @@ import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import LanguageToggle from "@/components/LanguageToggle";
-import { createCheckoutSession, submitOrder, type CustomerInfo, type LoyaltyProgress } from "./actions";
+import {
+  createCheckoutSession,
+  submitOrder,
+  type CustomerInfo,
+  type GroupReward,
+  type LoyaltyProgress,
+} from "./actions";
 
 const SPEECH_LANG: Record<string, string> = { de: "de-DE", ar: "ar-SA", en: "en-US" };
 const LARGE_TEXT_STORAGE_KEY = "gastrohub_menu_large_text";
@@ -75,6 +81,7 @@ export default function PublicMenuView({
     tableNumber: lockedTableNumber ?? "",
     orderType: lockedTableNumber ? "dine_in" : "pickup",
     notes: "",
+    referralCode: "",
   });
   const [pending, setPending] = useState(false);
   const [payingOnline, setPayingOnline] = useState(false);
@@ -82,6 +89,8 @@ export default function PublicMenuView({
   const [success, setSuccess] = useState(false);
   const [loyalty, setLoyalty] = useState<LoyaltyProgress | undefined>(undefined);
   const [orderId, setOrderId] = useState<string | undefined>(undefined);
+  const [ownReferralCode, setOwnReferralCode] = useState<string | undefined>(undefined);
+  const [groupReward, setGroupReward] = useState<GroupReward | undefined>(undefined);
   const [plantBasedOnly, setPlantBasedOnly] = useState(false);
   const [iftarSuhoorOnly, setIftarSuhoorOnly] = useState(false);
   const [query, setQuery] = useState("");
@@ -218,6 +227,8 @@ export default function PublicMenuView({
     }
     setLoyalty(result.loyalty);
     setOrderId(result.orderId);
+    setOwnReferralCode(result.referralCode);
+    setGroupReward(result.groupReward);
     setSuccess(true);
   }
 
@@ -266,6 +277,21 @@ export default function PublicMenuView({
         <span className="text-4xl">✅</span>
         <h1 className="font-display text-2xl font-bold">{t("order_success_title")}</h1>
         <p className="text-sm text-text-on-ink-dim">{t("order_success_lead")}</p>
+        {groupReward && (
+          <div className="rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 px-4 py-3">
+            <p className="text-sm font-semibold text-brand-green-bright">
+              🎉 {t("group_reward_unlocked_prefix")} {groupReward.text}
+            </p>
+          </div>
+        )}
+        {ownReferralCode && (
+          <div className="rounded-xl border border-divider bg-ink-soft px-4 py-3">
+            <p className="text-sm text-text-on-ink-dim">
+              {t("referral_own_code_lead")}{" "}
+              <span className="font-num font-bold text-text-on-ink">{ownReferralCode}</span>
+            </p>
+          </div>
+        )}
         {loyalty && (
           <div className="mt-2 flex flex-col gap-2">
             {loyalty.justReachedTierName && (
@@ -596,6 +622,14 @@ export default function PublicMenuView({
             value={customer.notes}
             onChange={(e) => setCustomer((c) => ({ ...c, notes: e.target.value }))}
             placeholder={t("checkout_notes_ph")}
+            className="min-h-11 rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
+          />
+          <input
+            type="text"
+            value={customer.referralCode}
+            onChange={(e) => setCustomer((c) => ({ ...c, referralCode: e.target.value.toUpperCase() }))}
+            placeholder={t("checkout_referral_ph")}
+            maxLength={6}
             className="min-h-11 rounded-lg border border-divider bg-ink px-3 py-2 text-sm outline-none focus:border-brand-green-bright"
           />
 

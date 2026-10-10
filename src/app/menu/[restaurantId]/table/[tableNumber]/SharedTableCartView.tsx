@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
 import { createClient } from "@/lib/supabase/client";
+import type { GroupReward } from "../../actions";
 import { joinTableCart, submitTableCart } from "./actions";
 
 const GUEST_ID_KEY = "gastrohub_guest_id";
@@ -63,6 +64,7 @@ export default function SharedTableCartView({
   const [notes, setNotes] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [groupReward, setGroupReward] = useState<GroupReward | undefined>(undefined);
 
   // Guest identity lives only in this device's localStorage — there's no
   // account system for table guests, same as the rest of the public menu.
@@ -196,6 +198,7 @@ export default function SharedTableCartView({
     setSubmitting(false);
     if (result.success && result.orderId) {
       setOrderId(result.orderId);
+      setGroupReward(result.groupReward);
       setShowCheckout(false);
     } else {
       setSubmitError(t("shared_cart_submit_error"));
@@ -239,6 +242,13 @@ export default function SharedTableCartView({
         <span className="text-4xl">✅</span>
         <h1 className="font-display text-2xl font-bold">{restaurantName}</h1>
         <p className="text-sm text-text-on-ink-dim">{t("shared_cart_sent_lead")}</p>
+        {groupReward && (
+          <div className="rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 px-4 py-3">
+            <p className="text-sm font-semibold text-brand-green-bright">
+              🎉 {t("group_reward_unlocked_prefix")} {groupReward.text}
+            </p>
+          </div>
+        )}
       </main>
     );
   }
