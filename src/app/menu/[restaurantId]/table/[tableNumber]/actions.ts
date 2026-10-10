@@ -28,6 +28,7 @@ export type SubmitTableCartState = {
   orderId?: string;
   loyalty?: LoyaltyProgress;
   groupReward?: GroupReward;
+  streakWeeks?: number;
 };
 
 export async function submitTableCart(
@@ -62,19 +63,22 @@ export async function submitTableCart(
     next_tier_reward: string | null;
     group_reward_unlocked: boolean;
     group_reward_text: string | null;
+    current_streak_weeks: number;
   };
 
   const groupReward =
     row.group_reward_unlocked && row.group_reward_text ? { text: row.group_reward_text } : undefined;
+  const streakWeeks = row.current_streak_weeks > 1 ? row.current_streak_weeks : undefined;
 
   if (!row.just_reached_tier_name && !row.next_tier_name) {
-    return { success: true, orderId: row.order_id, groupReward };
+    return { success: true, orderId: row.order_id, groupReward, streakWeeks };
   }
 
   return {
     success: true,
     orderId: row.order_id,
     groupReward,
+    streakWeeks,
     loyalty: {
       totalOrders: row.customer_total_orders,
       justReachedTierName: row.just_reached_tier_name,

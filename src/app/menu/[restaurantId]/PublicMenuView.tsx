@@ -91,6 +91,7 @@ export default function PublicMenuView({
   const [orderId, setOrderId] = useState<string | undefined>(undefined);
   const [ownReferralCode, setOwnReferralCode] = useState<string | undefined>(undefined);
   const [groupReward, setGroupReward] = useState<GroupReward | undefined>(undefined);
+  const [streakWeeks, setStreakWeeks] = useState<number | undefined>(undefined);
   const [plantBasedOnly, setPlantBasedOnly] = useState(false);
   const [iftarSuhoorOnly, setIftarSuhoorOnly] = useState(false);
   const [query, setQuery] = useState("");
@@ -229,6 +230,7 @@ export default function PublicMenuView({
     setOrderId(result.orderId);
     setOwnReferralCode(result.referralCode);
     setGroupReward(result.groupReward);
+    setStreakWeeks(result.streakWeeks);
     setSuccess(true);
   }
 
@@ -277,6 +279,13 @@ export default function PublicMenuView({
         <span className="text-4xl">✅</span>
         <h1 className="font-display text-2xl font-bold">{t("order_success_title")}</h1>
         <p className="text-sm text-text-on-ink-dim">{t("order_success_lead")}</p>
+        {streakWeeks && streakWeeks > 1 && (
+          <div className="rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 px-4 py-3">
+            <p className="text-sm font-semibold text-brand-green-bright">
+              🔥 {t("loyalty_streak_lead").replace("{weeks}", String(streakWeeks))}
+            </p>
+          </div>
+        )}
         {groupReward && (
           <div className="rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 px-4 py-3">
             <p className="text-sm font-semibold text-brand-green-bright">

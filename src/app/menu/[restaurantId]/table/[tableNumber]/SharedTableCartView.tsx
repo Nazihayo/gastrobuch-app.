@@ -65,6 +65,7 @@ export default function SharedTableCartView({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [groupReward, setGroupReward] = useState<GroupReward | undefined>(undefined);
+  const [streakWeeks, setStreakWeeks] = useState<number | undefined>(undefined);
 
   // Guest identity lives only in this device's localStorage — there's no
   // account system for table guests, same as the rest of the public menu.
@@ -199,6 +200,7 @@ export default function SharedTableCartView({
     if (result.success && result.orderId) {
       setOrderId(result.orderId);
       setGroupReward(result.groupReward);
+      setStreakWeeks(result.streakWeeks);
       setShowCheckout(false);
     } else {
       setSubmitError(t("shared_cart_submit_error"));
@@ -242,6 +244,13 @@ export default function SharedTableCartView({
         <span className="text-4xl">✅</span>
         <h1 className="font-display text-2xl font-bold">{restaurantName}</h1>
         <p className="text-sm text-text-on-ink-dim">{t("shared_cart_sent_lead")}</p>
+        {streakWeeks && streakWeeks > 1 && (
+          <div className="rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 px-4 py-3">
+            <p className="text-sm font-semibold text-brand-green-bright">
+              🔥 {t("loyalty_streak_lead").replace("{weeks}", String(streakWeeks))}
+            </p>
+          </div>
+        )}
         {groupReward && (
           <div className="rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 px-4 py-3">
             <p className="text-sm font-semibold text-brand-green-bright">
