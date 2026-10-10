@@ -12,6 +12,7 @@ import {
   detectShortRestPeriods,
   type MinijobCapFinding,
 } from "@/lib/scheduleCompliance";
+import { recommendStaffing } from "@/lib/staffingRecommendation";
 import { addShift, removeShift, type AddShiftState, type Shift } from "./actions";
 
 const initialState: AddShiftState = {};
@@ -99,6 +100,15 @@ export default function ScheduleView({
     minijobFindings.length > 0;
 
   const forecastByDate = useMemo(() => new Map(forecast.map((f) => [f.date, f])), [forecast]);
+
+  const staffingRecommendation = useMemo(
+    () => recommendStaffing(forecast, complianceInput, staff),
+    [forecast, complianceInput, staff]
+  );
+  const recommendationByDate = useMemo(
+    () => new Map(staffingRecommendation.map((r) => [r.date, r])),
+    [staffingRecommendation]
+  );
 
   if (staff.length === 0) {
     return (
@@ -202,6 +212,8 @@ export default function ScheduleView({
         {days.map((d, i) => {
           const dayShifts = visibleShifts.filter((s) => s.date === d);
           const dayForecast = forecastByDate.get(d);
+          const dayRecommendation = recommendationByDate.get(d);
+          const scheduledCount = new Set(dayShifts.map((s) => s.staffMemberId)).size;
           return (
             <div key={d} className="rounded-xl border border-divider bg-ink-soft p-4">
               <div className="mb-2 flex items-baseline justify-between">
@@ -214,6 +226,28 @@ export default function ScheduleView({
                   </span>
                 )}
               </div>
+              {dayRecommendation && dayRecommendation.recommendedHeadcount > 0 && (
+                <div className="mb-2 rounded-lg bg-ink px-3 py-2 text-[11px]">
+                  <p className="text-text-on-ink-dim">
+                    👥{" "}
+                    {t("sched_recommend_headcount")
+                      .replace("{count}", String(dayRecommendation.recommendedHeadcount))
+                      .replace("{scheduled}", String(scheduledCount))}
+                  </p>
+                  {dayRecommendation.ineligibleStaff.length > 0 && (
+                    <p className="mt-1 text-brand-red">
+                      ⚠️{" "}
+                      {dayRecommendation.ineligibleStaff
+                        .map((s) =>
+                          s.reason === "consecutive_days"
+                            ? t("sched_recommend_reason_consecutive").replace("{name}", s.staffName)
+                            : t("sched_recommend_reason_rest").replace("{name}", s.staffName)
+                        )
+                        .join(" · ")}
+                    </p>
+                  )}
+                </div>
+              )}
               {dayShifts.length === 0 ? (
                 <p className="text-xs text-text-on-ink-dim">{t("sched_no_shifts")}</p>
               ) : (
