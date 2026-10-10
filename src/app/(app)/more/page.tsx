@@ -28,6 +28,7 @@ const menuItems = [
   { href: "/scenario", key: "more_scenario" as const },
   { href: "/hygiene", key: "more_hygiene" as const },
   { href: "/reports", key: "more_reports" as const },
+  { href: "/my-earnings", key: "more_my_earnings" as const },
   { href: "/profile", key: "more_profile" as const },
 ];
 
