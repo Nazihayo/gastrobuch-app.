@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { type CountryCode } from "@/lib/countries";
+import { COUNTRIES, type CountryCode } from "@/lib/countries";
+import { getRamadanStatus } from "@/lib/prayerTimes";
 import PublicMenuView, { type PublicMenuItem } from "./PublicMenuView";
 
 type MenuRow = {
@@ -9,6 +10,8 @@ type MenuRow = {
   restaurant_logo_path: string | null;
   restaurant_whatsapp_number: string | null;
   restaurant_stripe_onboarded: boolean;
+  restaurant_ramadan_mode_enabled: boolean;
+  restaurant_ramadan_city: string;
   id: string;
   name: string;
   price: number;
@@ -16,6 +19,7 @@ type MenuRow = {
   photo_path: string | null;
   category: "food" | "drink";
   diet_tag: "vegan" | "vegetarian" | null;
+  ramadan_tag: "iftar" | "suhoor" | null;
 };
 
 export default async function PublicMenuPage({
@@ -49,7 +53,13 @@ export default async function PublicMenuPage({
     photoUrl: publicUrl(i.photo_path),
     category: i.category,
     dietTag: i.diet_tag,
+    ramadanTag: i.ramadan_tag,
   }));
+
+  const ramadanModeEnabled = items[0].restaurant_ramadan_mode_enabled;
+  const ramadanStatus = ramadanModeEnabled
+    ? await getRamadanStatus(items[0].restaurant_ramadan_city, COUNTRIES[items[0].restaurant_country].code)
+    : null;
 
   return (
     <PublicMenuView
@@ -61,6 +71,7 @@ export default async function PublicMenuPage({
       country={items[0].restaurant_country}
       items={menuItems}
       lockedTableNumber={table?.trim() || undefined}
+      ramadanStatus={ramadanModeEnabled ? ramadanStatus : null}
     />
   );
 }

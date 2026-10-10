@@ -34,6 +34,15 @@ export type PublicMenuItem = {
   photoUrl: string | null;
   category: "food" | "drink";
   dietTag: "vegan" | "vegetarian" | null;
+  ramadanTag: "iftar" | "suhoor" | null;
+};
+
+export type RamadanStatus = {
+  isRamadan: boolean;
+  hijriDay: number;
+  hijriMonthName: string;
+  hijriYear: number;
+  maghrib: string;
 };
 
 export default function PublicMenuView({
@@ -45,6 +54,7 @@ export default function PublicMenuView({
   country,
   items,
   lockedTableNumber,
+  ramadanStatus,
 }: {
   restaurantId: string;
   restaurantName: string;
@@ -54,6 +64,7 @@ export default function PublicMenuView({
   country: CountryCode;
   items: PublicMenuItem[];
   lockedTableNumber?: string;
+  ramadanStatus?: RamadanStatus | null;
 }) {
   const { t, locale } = useLanguage();
   const [cart, setCart] = useState<Record<string, number>>({});
@@ -72,6 +83,7 @@ export default function PublicMenuView({
   const [loyalty, setLoyalty] = useState<LoyaltyProgress | undefined>(undefined);
   const [orderId, setOrderId] = useState<string | undefined>(undefined);
   const [plantBasedOnly, setPlantBasedOnly] = useState(false);
+  const [iftarSuhoorOnly, setIftarSuhoorOnly] = useState(false);
   const [query, setQuery] = useState("");
   const [largeText, setLargeText] = useState(false);
   const [micSupported, setMicSupported] = useState(false);
@@ -80,8 +92,11 @@ export default function PublicMenuView({
   const recognitionRef = useRef<MinimalSpeechRecognition | null>(null);
 
   const hasPlantBasedItems = items.some((i) => i.dietTag !== null);
+  const isRamadanNow = Boolean(ramadanStatus?.isRamadan);
+  const hasRamadanItems = isRamadanNow && items.some((i) => i.ramadanTag !== null);
   const visibleItems = items.filter((i) => {
     if (plantBasedOnly && i.dietTag === null) return false;
+    if (iftarSuhoorOnly && i.ramadanTag === null) return false;
     if (query.trim() && !i.name.toLowerCase().includes(query.trim().toLowerCase())) return false;
     return true;
   });
@@ -369,19 +384,44 @@ export default function PublicMenuView({
         </button>
       </div>
 
-      {hasPlantBasedItems && (
-        <button
-          type="button"
-          onClick={() => setPlantBasedOnly((v) => !v)}
-          className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-medium ${
-            plantBasedOnly
-              ? "border-brand-green-bright text-brand-green-bright"
-              : "border-divider text-text-on-ink-dim"
-          }`}
-        >
-          🌱 {t("public_menu_plant_based_filter")}
-        </button>
+      {isRamadanNow && ramadanStatus && (
+        <div className="rounded-xl border border-brand-green-bright/40 bg-brand-green-bright/10 p-3 text-center text-sm text-brand-green-bright">
+          🌙 {t("ramadan_banner_hijri")
+            .replace("{day}", String(ramadanStatus.hijriDay))
+            .replace("{year}", String(ramadanStatus.hijriYear))}
+          <br />
+          {t("ramadan_banner_maghrib").replace("{time}", ramadanStatus.maghrib)}
+        </div>
       )}
+
+      <div className="flex gap-2">
+        {hasPlantBasedItems && (
+          <button
+            type="button"
+            onClick={() => setPlantBasedOnly((v) => !v)}
+            className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-medium ${
+              plantBasedOnly
+                ? "border-brand-green-bright text-brand-green-bright"
+                : "border-divider text-text-on-ink-dim"
+            }`}
+          >
+            🌱 {t("public_menu_plant_based_filter")}
+          </button>
+        )}
+        {hasRamadanItems && (
+          <button
+            type="button"
+            onClick={() => setIftarSuhoorOnly((v) => !v)}
+            className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-medium ${
+              iftarSuhoorOnly
+                ? "border-brand-green-bright text-brand-green-bright"
+                : "border-divider text-text-on-ink-dim"
+            }`}
+          >
+            🌙 {t("ramadan_filter_btn")}
+          </button>
+        )}
+      </div>
 
       <div className="flex flex-col gap-2.5">
         {visibleItems.length === 0 && (

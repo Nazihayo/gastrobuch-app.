@@ -18,11 +18,13 @@ export async function updateRestaurantProfile(patch: {
   datevMandantNr?: string;
   tableCount?: number;
   whatsappNumber?: string;
+  ramadanModeEnabled?: boolean;
+  ramadanCity?: string;
 }): Promise<void> {
   const { restaurant } = await getCurrentRestaurant();
   const supabase = await createClient();
 
-  const dbPatch: Record<string, string | number> = {};
+  const dbPatch: Record<string, string | number | boolean> = {};
   if (patch.name !== undefined) dbPatch.name = patch.name;
   if (patch.phone !== undefined) dbPatch.phone = patch.phone;
   if (patch.address !== undefined) dbPatch.address = patch.address;
@@ -37,6 +39,8 @@ export async function updateRestaurantProfile(patch: {
   if (patch.datevMandantNr !== undefined) dbPatch.datev_mandant_nr = patch.datevMandantNr;
   if (patch.tableCount !== undefined) dbPatch.table_count = patch.tableCount;
   if (patch.whatsappNumber !== undefined) dbPatch.whatsapp_number = patch.whatsappNumber;
+  if (patch.ramadanModeEnabled !== undefined) dbPatch.ramadan_mode_enabled = patch.ramadanModeEnabled;
+  if (patch.ramadanCity !== undefined) dbPatch.ramadan_city = patch.ramadanCity;
 
   await supabase.from("restaurants").update(dbPatch).eq("id", restaurant.id);
 

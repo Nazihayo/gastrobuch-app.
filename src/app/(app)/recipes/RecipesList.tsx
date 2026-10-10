@@ -28,6 +28,7 @@ type RecipeState = {
   photoUrl: string | null;
   category: "food" | "drink";
   dietTag: "vegan" | "vegetarian" | null;
+  ramadanTag: "iftar" | "suhoor" | null;
   ingredients: Ingredient[];
 };
 
@@ -77,7 +78,7 @@ export default function RecipesList({
   function commitRecipe(
     rid: string,
     patch: Partial<
-      Pick<RecipeState, "name" | "price" | "deliveryCommissionPct" | "category" | "dietTag">
+      Pick<RecipeState, "name" | "price" | "deliveryCommissionPct" | "category" | "dietTag" | "ramadanTag">
     >
   ) {
     startTransition(() => {
@@ -376,6 +377,50 @@ export default function RecipesList({
                     }`}
                   >
                     🌱 {t("rec_diet_vegan")}
+                  </button>
+                </div>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchRecipeLocal(r.id, { ramadanTag: null });
+                      commitRecipe(r.id, { ramadanTag: null });
+                    }}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-medium ${
+                      r.ramadanTag === null
+                        ? "border-brand-green-bright text-brand-green-bright"
+                        : "border-divider text-text-on-ink-dim"
+                    }`}
+                  >
+                    {t("rec_ramadan_none")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchRecipeLocal(r.id, { ramadanTag: "iftar" });
+                      commitRecipe(r.id, { ramadanTag: "iftar" });
+                    }}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-medium ${
+                      r.ramadanTag === "iftar"
+                        ? "border-brand-green-bright text-brand-green-bright"
+                        : "border-divider text-text-on-ink-dim"
+                    }`}
+                  >
+                    🌙 {t("rec_ramadan_iftar")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      patchRecipeLocal(r.id, { ramadanTag: "suhoor" });
+                      commitRecipe(r.id, { ramadanTag: "suhoor" });
+                    }}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-medium ${
+                      r.ramadanTag === "suhoor"
+                        ? "border-brand-green-bright text-brand-green-bright"
+                        : "border-divider text-text-on-ink-dim"
+                    }`}
+                  >
+                    🌅 {t("rec_ramadan_suhoor")}
                   </button>
                 </div>
               </div>

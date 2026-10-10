@@ -36,6 +36,8 @@ export default function ProfileForm({
   subscriptionStatus,
   trialDaysLeft,
   isOwner,
+  ramadanModeEnabled: initialRamadanModeEnabled,
+  ramadanCity,
   loyaltyTiers,
   tableCount,
   tableQrCodes,
@@ -62,6 +64,8 @@ export default function ProfileForm({
   subscriptionStatus: "trialing" | "active" | "past_due" | "canceled";
   trialDaysLeft: number;
   isOwner: boolean;
+  ramadanModeEnabled: boolean;
+  ramadanCity: string;
   loyaltyTiers: LoyaltyTier[];
   tableCount: number;
   tableQrCodes: { number: number; qrDataUrl: string }[];
@@ -167,6 +171,14 @@ export default function ProfileForm({
   }
 
   const [portalPending, setPortalPending] = useState(false);
+
+  const [ramadanModeEnabled, setRamadanModeEnabled] = useState(initialRamadanModeEnabled);
+
+  function handleToggleRamadanMode() {
+    const next = !ramadanModeEnabled;
+    setRamadanModeEnabled(next);
+    commit({ ramadanModeEnabled: next });
+  }
 
   async function handleOpenBillingPortal() {
     setPortalPending(true);
@@ -330,6 +342,33 @@ export default function ProfileForm({
           >
             {portalPending ? "…" : t("profile_billing_manage_btn")}
           </button>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-divider bg-ink-soft p-5">
+        <div>
+          <h2 className="text-sm font-semibold">🌙 {t("profile_ramadan_title")}</h2>
+          <p className="mt-1 text-xs text-text-on-ink-dim">{t("profile_ramadan_lead")}</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleToggleRamadanMode}
+          className={`flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
+            ramadanModeEnabled
+              ? "border-brand-green-bright bg-brand-green-bright/10 text-brand-green-bright"
+              : "border-divider text-text-on-ink-dim"
+          }`}
+        >
+          {ramadanModeEnabled ? "✅" : "⬜️"} {t("profile_ramadan_enable")}
+        </button>
+        {ramadanModeEnabled && (
+          <Field label={t("profile_ramadan_city_label")}>
+            <TextInput
+              defaultValue={ramadanCity}
+              placeholder={t("profile_ramadan_city_ph")}
+              onCommit={(v) => commit({ ramadanCity: v })}
+            />
+          </Field>
         )}
       </div>
 
