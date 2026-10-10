@@ -29,7 +29,10 @@ const menuItems = [
   { href: "/profile", key: "more_profile" as const },
 ];
 
-const ownerOnlyItems = [{ href: "/team", key: "more_team" as const }];
+const ownerOnlyItems = [
+  { href: "/team", key: "more_team" as const },
+  { href: "/portfolio", key: "more_portfolio" as const },
+];
 
 export default async function MorePage() {
   const [locale, { role }] = await Promise.all([getLocale(), getCurrentRestaurant()]);
