@@ -33,6 +33,7 @@ const ownerOnlyItems = [
   { href: "/team", key: "more_team" as const },
   { href: "/portfolio", key: "more_portfolio" as const },
   { href: "/group-finance", key: "more_group_finance" as const },
+  { href: "/franchise", key: "more_franchise" as const },
 ];
 
 export default async function MorePage() {
