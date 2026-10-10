@@ -23,6 +23,7 @@ const menuItems = [
   { href: "/menu-engineering", key: "more_menu_engineering" as const },
   { href: "/waste-check", key: "more_waste" as const },
   { href: "/inventory-variance", key: "more_inventory_variance" as const },
+  { href: "/suppliers", key: "more_suppliers" as const },
   { href: "/goals", key: "more_goals" as const },
   { href: "/scenario", key: "more_scenario" as const },
   { href: "/hygiene", key: "more_hygiene" as const },
