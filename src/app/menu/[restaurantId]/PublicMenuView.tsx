@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { fmtMoney, type CountryCode } from "@/lib/countries";
@@ -465,8 +466,16 @@ export default function PublicMenuView({
           </div>
 
           {lockedTableNumber ? (
-            <div className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand-green-bright bg-brand-green-bright/10 px-3 text-sm font-semibold text-brand-green-bright">
-              🍽️ {t("table_label")} {lockedTableNumber}
+            <div className="flex flex-col gap-2">
+              <div className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand-green-bright bg-brand-green-bright/10 px-3 text-sm font-semibold text-brand-green-bright">
+                🍽️ {t("table_label")} {lockedTableNumber}
+              </div>
+              <Link
+                href={`/menu/${restaurantId}/table/${encodeURIComponent(lockedTableNumber)}`}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-divider text-sm font-medium text-text-on-ink-dim hover:text-text-on-ink"
+              >
+                👥 {t("shared_cart_banner_link")}
+              </Link>
             </div>
           ) : (
             <div className="flex gap-2">
